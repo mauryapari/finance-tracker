@@ -1,0 +1,24 @@
+import Aura from '@primevue/themes/aura'
+
+export default defineNuxtConfig({
+  css: ['primeicons/primeicons.css'],
+  future: { compatibilityVersion: 4 },
+  compatibilityDate: '2025-07-15',
+  ssr: false,
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@primevue/nuxt-module', '@nuxt/a11y'],
+  tailwindcss: { config: { darkMode: 'class' } },
+  primevue: {
+    options: {
+      theme: { preset: Aura, options: { darkModeSelector: '.dark' } },
+      ripple: true,
+    }
+  },
+  vite: {
+    optimizeDeps: {
+      include: ['uuid'],
+    }
+  },
+  // @ts-expect-error nitro is valid at runtime; type defs lag behind
+  nitro: { preset: 'netlify' },
+  devtools: { enabled: true }
+})
