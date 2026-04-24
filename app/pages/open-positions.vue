@@ -1,3 +1,3 @@
 <template>
-  <PositionsTable class="h-full" table-key="openPositions" title="Open Positions" type="open" />
+  <Table class="h-full" table-key="openPositions" title="Open Positions" />
 </template>

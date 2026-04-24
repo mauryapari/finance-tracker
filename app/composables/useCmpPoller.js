@@ -34,6 +34,20 @@ export function useCmpPoller() {
     }
   }
 
+  async function fetchPeak(position) {
+    if (!position.stock || !position.buyDate) return
+    const suffix = position.stockExchange === 'BSE' ? '.BO' : '.NS'
+    const symbol = position.stock.includes('.') ? position.stock : position.stock + suffix
+    try {
+      const data = await $fetch(`/api/stock-peak?symbol=${encodeURIComponent(symbol)}&from=${position.buyDate}`)
+      if (data.peak != null) {
+        store.updatePeak('openPositions', position.id, data.peak)
+      }
+    } catch (e) {
+      // silently skip
+    }
+  }
+
   async function pollAll() {
     const targets = [
       ...store.tables.openPositions.map(p => ({ tableKey: 'openPositions', position: p })),
@@ -58,6 +72,7 @@ export function useCmpPoller() {
       if (document.visibilityState === 'visible') pollAll()
     })
     startPolling()
+    Promise.allSettled(store.tables.openPositions.map(p => fetchPeak(p)))
   })
 
   onUnmounted(() => {

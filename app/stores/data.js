@@ -85,8 +85,24 @@ export const useDataStore = defineStore('data', {
     updateCmp(tableKey, id, price) {
       const idx = this.tables[tableKey].findIndex(r => r.id === id)
       if (idx !== -1) {
-        this.tables[tableKey][idx] = { ...this.tables[tableKey][idx], cmp: price }
-        // intentionally NOT saving to storage — transient
+        const row = this.tables[tableKey][idx]
+        const update = { ...row, cmp: price }
+        if (tableKey === 'openPositions' && price > (row.peakPrice || 0)) {
+          update.peakPrice = price
+          this.tables[tableKey][idx] = update
+          this.saveToStorage()
+        } else {
+          this.tables[tableKey][idx] = update
+          // CMP stays transient
+        }
+      }
+    },
+
+    updatePeak(tableKey, id, peak) {
+      const idx = this.tables[tableKey].findIndex(r => r.id === id)
+      if (idx !== -1 && peak > (this.tables[tableKey][idx].peakPrice || 0)) {
+        this.tables[tableKey][idx] = { ...this.tables[tableKey][idx], peakPrice: peak }
+        this.saveToStorage()
       }
     },
 

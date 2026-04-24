@@ -1,3 +1,3 @@
 <template>
-  <TableWithModal class="h-full" table-key="closedEtfs" title="Closed ETFs" />
+  <Table class="h-full" table-key="closedEtfs" title="Closed ETFs" />
 </template>
