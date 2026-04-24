@@ -140,7 +140,10 @@
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import { useDataStore } from '~/stores/data'
-import { calcDays, calcBuyValue, calcCurrentValue, calcPctGain, calcAnnualGainPct } from '~/composables/useCalculations'
+import { calcDays, calcBuyValue, calcCurrentValue, calcPctGain, calcAnnualGainPct, fmt, fmtPct } from '~/composables/useCalculations'
+import { useTableEditing } from '~/composables/useTableEditing'
+import { useTableDelete } from '~/composables/useTableDelete'
+import { COLUMNS, FIELD_CONFIGS, BLANK_ROWS } from '~/utils/tableConfigs'
 
 const props = defineProps({
   tableKey: { type: String, required: true },
@@ -148,152 +151,11 @@ const props = defineProps({
 })
 
 const store = useDataStore()
-const editingRows  = ref([])
-const refreshKey   = ref(0)
-const deleteDialog = ref(false)
-const deletingId   = ref(null)
+const { editingRows, refreshKey, isEditing, startEdit, cancelEdit } = useTableEditing()
+const { deleteDialog, startDelete, confirmDelete } = useTableDelete(store, props.tableKey)
 const closeDialog  = ref(false)
 const closeForm    = ref({ stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null })
 
-const fmt    = n => n != null ? Number(n).toFixed(2) : ''
-const fmtPct = n => n != null ? Number(n).toFixed(2) + '%' : ''
-
-const COLUMNS = {
-  etfs: [
-    { key: 'type',          label: 'Type' },
-    { key: 'stock',         label: 'Stock', frozen: true, class: () => 'font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase' },
-    { key: 'stockExchange', label: 'Exchange' },
-    { key: 'buyDate',       label: 'Buy Date' },
-    { key: 'buyPrice',      label: 'Buy Price',  format: n => n?.toFixed(2) },
-    { key: 'qty',           label: 'Qty' },
-    { key: 'buyValue',      label: 'Buy Value',  format: n => n?.toFixed(2) },
-    { key: 'cmp',           label: 'CMP',        format: n => n?.toFixed(2) },
-    { key: 'currentValue',  label: 'Curr Value', format: n => n?.toFixed(2) },
-    { key: 'pctGain',       label: '% Gain',     format: n => n?.toFixed(2) + '%',
-      class: r => r.pctGain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'days',          label: 'Days' },
-    { key: 'target',        label: 'Target',     format: n => n?.toFixed(2) },
-  ],
-  closedEtfs: [
-    { key: 'type',          label: 'Type' },
-    { key: 'stock',         label: 'Stock', frozen: true, class: () => 'font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase' },
-    { key: 'buyDate',       label: 'Buy Date' },
-    { key: 'buyRate',       label: 'Buy Rate',   format: n => n?.toFixed(2) },
-    { key: 'qty',           label: 'Qty' },
-    { key: 'buyValue',      label: 'Buy Value',  format: n => n?.toFixed(2) },
-    { key: 'sellDate',      label: 'Sell Date' },
-    { key: 'sellPrice',     label: 'Sell Price', format: n => n?.toFixed(2) },
-    { key: 'sellValue',     label: 'Sell Value', format: n => n?.toFixed(2) },
-    { key: 'gain',          label: 'Gain',       format: n => n?.toFixed(2),
-      class: r => r.gain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'days',          label: 'Days' },
-    { key: 'pctGain',       label: '% Gain',     format: n => n?.toFixed(2) + '%',
-      class: r => r.pctGain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'annualGainPct', label: 'Annual%',    format: n => n?.toFixed(2) + '%',
-      class: r => r.annualGainPct >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-  ],
-  commodityEtfs: [
-    { key: 'type',          label: 'Type' },
-    { key: 'stock',         label: 'Stock', frozen: true, class: () => 'font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase' },
-    { key: 'stockExchange', label: 'Exchange' },
-    { key: 'buyDate',       label: 'Buy Date' },
-    { key: 'buyPrice',      label: 'Buy Price',  format: n => n?.toFixed(2) },
-    { key: 'qty',           label: 'Qty' },
-    { key: 'buyValue',      label: 'Buy Value',  format: n => n?.toFixed(2) },
-    { key: 'cmp',           label: 'CMP',        format: n => n?.toFixed(2) },
-    { key: 'currentValue',  label: 'Curr Value', format: n => n?.toFixed(2) },
-    { key: 'pctGain',       label: '% Gain',     format: n => n?.toFixed(2) + '%',
-      class: r => r.pctGain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'days',          label: 'Days' },
-  ],
-  closedCommodityEtfs: [
-    { key: 'stock',         label: 'Stock', frozen: true, class: () => 'font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase' },
-    { key: 'buyDate',       label: 'Buy Date' },
-    { key: 'buyRate',       label: 'Buy Rate',   format: n => n?.toFixed(2) },
-    { key: 'qty',           label: 'Qty' },
-    { key: 'buyValue',      label: 'Buy Value',  format: n => n?.toFixed(2) },
-    { key: 'sellDate',      label: 'Sell Date' },
-    { key: 'sellPrice',     label: 'Sell Price', format: n => n?.toFixed(2) },
-    { key: 'sellValue',     label: 'Sell Value', format: n => n?.toFixed(2) },
-    { key: 'gain',          label: 'Gain',       format: n => n?.toFixed(2),
-      class: r => r.gain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'days',          label: 'Days' },
-    { key: 'pctGain',       label: '% Gain',     format: n => n?.toFixed(2) + '%',
-      class: r => r.pctGain >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-    { key: 'annualGainPct', label: 'Annual%',    format: n => n?.toFixed(2) + '%',
-      class: r => r.annualGainPct >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium' },
-  ],
-  cagrEntries: [
-    { key: 'text',            label: 'Description', frozen: true },
-    { key: 'date',            label: 'Date' },
-    { key: 'amount',          label: 'Amount', format: n => n?.toLocaleString('en-IN') },
-    { key: 'investmentOrOut', label: 'Type' },
-  ],
-  commodityCagrEntries: [
-    { key: 'text',   label: 'Description', frozen: true },
-    { key: 'date',   label: 'Date' },
-    { key: 'amount', label: 'Amount', format: n => n?.toLocaleString('en-IN') },
-  ],
-}
-
-const FIELD_CONFIGS = {
-  etfs: [
-    { key: 'type',          label: 'Type' },
-    { key: 'stock',         label: 'Stock Symbol' },
-    { key: 'stockExchange', label: 'Exchange',  type: 'select', options: ['NSE', 'BSE'] },
-    { key: 'buyDate',       label: 'Buy Date',  type: 'date' },
-    { key: 'buyPrice',      label: 'Buy Price', type: 'number' },
-    { key: 'qty',           label: 'Qty',       type: 'number' },
-    { key: 'cmp',           label: 'CMP',       type: 'number' },
-    { key: 'target',        label: 'Target',    type: 'number' },
-  ],
-  closedEtfs: [
-    { key: 'type',      label: 'Type' },
-    { key: 'stock',     label: 'Stock Symbol' },
-    { key: 'buyDate',   label: 'Buy Date',   type: 'date' },
-    { key: 'buyRate',   label: 'Buy Rate',   type: 'number' },
-    { key: 'qty',       label: 'Qty',        type: 'number' },
-    { key: 'sellDate',  label: 'Sell Date',  type: 'date' },
-    { key: 'sellPrice', label: 'Sell Price', type: 'number' },
-  ],
-  commodityEtfs: [
-    { key: 'type',          label: 'Type' },
-    { key: 'stock',         label: 'Stock Symbol' },
-    { key: 'stockExchange', label: 'Exchange',  type: 'select', options: ['NSE', 'BSE'] },
-    { key: 'buyDate',       label: 'Buy Date',  type: 'date' },
-    { key: 'buyPrice',      label: 'Buy Price', type: 'number' },
-    { key: 'qty',           label: 'Qty',       type: 'number' },
-    { key: 'cmp',           label: 'CMP',       type: 'number' },
-  ],
-  closedCommodityEtfs: [
-    { key: 'stock',     label: 'Stock Symbol' },
-    { key: 'buyDate',   label: 'Buy Date',   type: 'date' },
-    { key: 'buyRate',   label: 'Buy Rate',   type: 'number' },
-    { key: 'qty',       label: 'Qty',        type: 'number' },
-    { key: 'sellDate',  label: 'Sell Date',  type: 'date' },
-    { key: 'sellPrice', label: 'Sell Price', type: 'number' },
-  ],
-  cagrEntries: [
-    { key: 'text',            label: 'Description' },
-    { key: 'date',            label: 'Date',   type: 'date' },
-    { key: 'amount',          label: 'Amount', type: 'number' },
-    { key: 'investmentOrOut', label: 'Type',   type: 'select', options: ['Investment', 'Out'] },
-  ],
-  commodityCagrEntries: [
-    { key: 'text',   label: 'Description' },
-    { key: 'date',   label: 'Date',   type: 'date' },
-    { key: 'amount', label: 'Amount', type: 'number' },
-  ],
-}
-
-const BLANK_ROWS = {
-  etfs:                 { type: '', stock: '', stockExchange: 'NSE', buyDate: '', buyPrice: 0, qty: 0, cmp: 0, target: 0 },
-  closedEtfs:           { type: '', stock: '', buyDate: '', buyRate: 0, qty: 0, sellDate: '', sellPrice: 0 },
-  commodityEtfs:        { type: '', stock: '', stockExchange: 'NSE', buyDate: '', buyPrice: 0, qty: 0, cmp: 0 },
-  closedCommodityEtfs:  { stock: '', buyDate: '', buyRate: 0, qty: 0, sellDate: '', sellPrice: 0 },
-  cagrEntries:          { text: '', date: '', amount: 0, investmentOrOut: 'Investment' },
-  commodityCagrEntries: { text: '', date: '', amount: 0 },
-}
 
 const columns  = computed(() => COLUMNS[props.tableKey] || [])
 const fields   = computed(() => FIELD_CONFIGS[props.tableKey] || [])
@@ -325,18 +187,6 @@ const enrichedRows = computed(() => {
   return store.tables[props.tableKey].map(enrichRow)
 })
 
-// ── Row editing ────────────────────────────────────────────────────────────
-const isEditing = id => editingRows.value.some(r => r.id === id)
-
-function startEdit(data) {
-  editingRows.value = [...editingRows.value, data]
-}
-
-function cancelEdit() {
-  editingRows.value = []
-  refreshKey.value++
-}
-
 function saveEdit(data) {
   const row = { id: data.id }
   for (const f of fields.value) {
@@ -351,18 +201,6 @@ function addRow() {
   const blank = { id: uuidv4(), ...(BLANK_ROWS[props.tableKey] || {}) }
   store.addRow(props.tableKey, blank)
   editingRows.value = [blank]
-}
-
-// ── Delete ─────────────────────────────────────────────────────────────────
-function startDelete(id) {
-  deletingId.value = id
-  deleteDialog.value = true
-}
-
-function confirmDelete() {
-  store.deleteRow(props.tableKey, deletingId.value)
-  deleteDialog.value = false
-  deletingId.value = null
 }
 
 // ── Close ETF position ─────────────────────────────────────────────────────

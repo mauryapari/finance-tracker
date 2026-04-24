@@ -67,6 +67,15 @@ export function xirr(cashflows, guess = 0.1) {
   return rate
 }
 
+export const fmt = n =>
+  n != null ? Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
+
+export const fmtPct = n =>
+  n != null ? Number(n).toFixed(2) + '%' : ''
+
+export const gainClass = n =>
+  n >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium'
+
 export function calcPortfolioSummary(positions, cagrEntries) {
   const netValue = positions.reduce((s, p) => s + calcCurrentValue(p.cmp, p.qty), 0)
   const totalInvested = positions.reduce((s, p) => s + calcBuyValue(p.buyPrice, p.qty), 0)

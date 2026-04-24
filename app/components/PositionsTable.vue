@@ -18,118 +18,32 @@
       :row-class="rowClass"
       class="text-sm flex-1"
     >
-      <!-- ── OPEN POSITIONS ───────────────────────── -->
-      <Column sortable v-if="type==='open'" field="stock" header="Stock" style="min-width:7rem" frozen alignFrozen="left">
-        <template #body="{ data }">
-          <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase">{{ data.stock }}</span>
+      <Column
+        v-for="col in columns"
+        :key="col.field"
+        sortable
+        :field="col.field"
+        :header="col.header"
+        :class="col.minW"
+        :frozen="col.frozen || false"
+        :alignFrozen="col.alignFrozen"
+      >
+        <template v-if="col.format || col.bodyClass || col.isStock" #body="{ data }">
+          <span v-if="col.isStock" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase">{{ data[col.field] }}</span>
+          <span v-else-if="col.bodyClass" :class="col.bodyClass(data[col.field])">{{ col.format ? col.format(data[col.field]) : data[col.field] }}</span>
+          <template v-else>{{ col.format(data[col.field]) }}</template>
         </template>
-        <template #editor="{ data, field }"><InputText v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="stockExchange" header="Exchange" style="min-width:6rem">
-        <template #editor="{ data, field }">
-          <Select v-model="data[field]" :options="['NSE','BSE']" size="small" class="w-full" />
+        <template v-if="col.editorType" #editor="{ data, field }">
+          <Select v-if="col.editorType === 'select'" v-model="data[field]" :options="col.options" size="small" class="w-full" />
+          <InputText v-else-if="col.editorType === 'date'" v-model="data[field]" type="date" size="small" class="w-full" />
+          <InputNumber v-else-if="col.editorType === 'decimal'" v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" />
+          <InputNumber v-else-if="col.editorType === 'number'" v-model="data[field]" size="small" class="w-full" />
+          <InputText v-else v-model="data[field]" size="small" class="w-full" />
         </template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="buyDate" header="Buy Date" style="min-width:8rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" type="date" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="buyPrice" header="Buy Price" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.buyPrice) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="qty" header="Qty" style="min-width:5rem">
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="buyValue" header="Buy Value" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.buyValue) }}</template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="cmp" header="CMP" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.cmp) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="peakPrice" header="Peak" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.peakPrice) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="dropFromPeak" header="Drop%" style="min-width:6rem">
-        <template #body="{ data }"><span :class="data.dropFromPeak > 20 ? 'text-red-500 dark:text-red-400 font-medium' : ''">{{ fmtPct(data.dropFromPeak) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="currentValue" header="Curr Value" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.currentValue) }}</template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="pctGain" header="% Gain" style="min-width:6rem">
-        <template #body="{ data }"><span :class="gainClass(data.pctGain)">{{ fmtPct(data.pctGain) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="annualGainPct" header="Annual%" style="min-width:6rem">
-        <template #body="{ data }"><span :class="gainClass(data.annualGainPct)">{{ fmtPct(data.annualGainPct) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="days" header="Days" style="min-width:5rem" />
-      <Column sortable v-if="type==='open'" field="strategyName" header="Strategy" style="min-width:9rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="targetPrice" header="Target" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.targetPrice) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="totalPotentialGain" header="Total Pot%" style="min-width:7rem">
-        <template #body="{ data }">{{ fmtPct(data.totalPotentialGain) }}</template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="remainingGain" header="Remaining%" style="min-width:7rem">
-        <template #body="{ data }">{{ fmtPct(data.remainingGain) }}</template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="targetValue" header="Target Val" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.targetValue) }}</template>
-      </Column>
-      <Column sortable v-if="type==='open'" field="description" header="Description" style="min-width:10rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" size="small" class="w-full" /></template>
       </Column>
 
-      <!-- ── CLOSED POSITIONS ────────────────────── -->
-      <Column sortable v-if="type==='closed'" field="stock" header="Stock" style="min-width:7rem" frozen alignFrozen="left">
-        <template #body="{ data }">
-          <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wider text-xs uppercase">{{ data.stock }}</span>
-        </template>
-        <template #editor="{ data, field }"><InputText v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="buyDate" header="Buy Date" style="min-width:8rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" type="date" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="buyRate" header="Buy Rate" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.buyRate) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="qty" header="Qty" style="min-width:5rem">
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="buyValue" header="Buy Value" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.buyValue) }}</template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="sellDate" header="Sell Date" style="min-width:8rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" type="date" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="sellPrice" header="Sell Price" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.sellPrice) }}</template>
-        <template #editor="{ data, field }"><InputNumber v-model="data[field]" :minFractionDigits="2" size="small" class="w-full" /></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="sellValue" header="Sell Value" style="min-width:7rem">
-        <template #body="{ data }">{{ fmt(data.sellValue) }}</template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="gain" header="Gain" style="min-width:7rem">
-        <template #body="{ data }"><span :class="gainClass(data.gain)">{{ fmt(data.gain) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="days" header="Days" style="min-width:5rem" />
-      <Column sortable v-if="type==='closed'" field="pctGain" header="% Gain" style="min-width:6rem">
-        <template #body="{ data }"><span :class="gainClass(data.pctGain)">{{ fmtPct(data.pctGain) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="annualGainPct" header="Annual%" style="min-width:6rem">
-        <template #body="{ data }"><span :class="gainClass(data.annualGainPct)">{{ fmtPct(data.annualGainPct) }}</span></template>
-      </Column>
-      <Column sortable v-if="type==='closed'" field="description" header="Description" style="min-width:10rem">
-        <template #editor="{ data, field }"><InputText v-model="data[field]" size="small" class="w-full" /></template>
-      </Column>
-
-      <!-- ── ACTIONS (combined) ─────────────────── -->
-      <Column style="width:8rem;text-align:center" frozen alignFrozen="right">
+      <!-- ── ACTIONS ─────────────────────────────── -->
+      <Column class="w-32 text-center" frozen alignFrozen="right">
         <template #body="{ data }">
           <div class="flex gap-0.5 justify-center">
             <template v-if="isEditing(data.id)">
@@ -158,7 +72,6 @@
     <!-- Close position dialog -->
     <Dialog v-model:visible="sellDialog" modal header="Close Position" :style="{ width: '26rem' }">
       <div class="space-y-4 pt-1">
-        <!-- Context info -->
         <div class="grid grid-cols-2 gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm">
           <div>
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Stock</p>
@@ -178,7 +91,6 @@
           </div>
         </div>
 
-        <!-- Editable fields -->
         <div class="flex flex-col gap-1">
           <label for="sell-date" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sell Date</label>
           <InputText inputId="sell-date" v-model="sellForm.sellDate" type="date" class="w-full" />
@@ -192,7 +104,6 @@
           <InputNumber inputId="sell-qty" v-model="sellForm.qty" :min="1" :max="sellForm.maxQty" class="w-full" />
         </div>
 
-        <!-- Projected P&L preview -->
         <div v-if="sellForm.sellPrice && sellForm.qty" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm">
           <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Projected P&amp;L</p>
           <p :class="sellPnl >= 0 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-500 dark:text-red-400 font-semibold'">
@@ -216,8 +127,11 @@ import { useDataStore } from '~/stores/data'
 import {
   calcDays, calcBuyValue, calcCurrentValue, calcPctGain,
   calcAnnualGainPct, calcDropFromPeak, calcTargetValue,
-  calcTotalPotentialGain, calcRemainingGain
+  calcTotalPotentialGain, calcRemainingGain, fmt, fmtPct
 } from '~/composables/useCalculations'
+import { useTableEditing } from '~/composables/useTableEditing'
+import { useTableDelete } from '~/composables/useTableDelete'
+import { COLUMNS } from '~/utils/tableConfigs'
 
 const props = defineProps({
   tableKey: { type: String, required: true },
@@ -226,21 +140,19 @@ const props = defineProps({
 })
 
 const store = useDataStore()
-const editingRows = ref([])
-const refreshKey  = ref(0)
-const deleteDialog = ref(false)
-const deletingId   = ref(null)
-const sellDialog   = ref(false)
-const sellForm     = ref({ stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null })
-
-const fmt    = n => n != null ? Number(n).toFixed(2) : ''
-const fmtPct = n => n != null ? Number(n).toFixed(2) + '%' : ''
-const gainClass = n => n >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium'
+const { editingRows, refreshKey, isEditing, startEdit, cancelEdit } = useTableEditing()
+const { deleteDialog, startDelete, confirmDelete } = useTableDelete(store, props.tableKey)
+const sellDialog = ref(false)
+const sellForm   = ref({ stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null })
 
 function rowClass(row) {
   return row._targetHit ? 'bg-green-50' : ''
 }
 
+const columns  = computed(() => COLUMNS[props.tableKey] || [])
+// const columns = computed(() => props.type === 'open' ? OPEN_COLUMNS : CLOSED_COLUMNS)
+
+// ── Data enrichment ────────────────────────────────────────────────────────
 const totalCurrentValue = computed(() =>
   store.tables[props.tableKey].reduce((s, p) => s + (p.cmp || 0) * (p.qty || 0), 0)
 )
@@ -287,17 +199,6 @@ const enrichedRows = computed(() => {
 const openRawFields   = ['id', 'description', 'stock', 'stockExchange', 'buyDate', 'buyPrice', 'qty', 'cmp', 'peakPrice', 'strategyName', 'targetPrice']
 const closedRawFields = ['id', 'description', 'stock', 'buyDate', 'buyRate', 'qty', 'sellDate', 'sellPrice']
 
-const isEditing = id => editingRows.value.some(r => r.id === id)
-
-function startEdit(data) {
-  editingRows.value = [...editingRows.value, data]
-}
-
-function cancelEdit() {
-  editingRows.value = []
-  refreshKey.value++
-}
-
 function saveEdit(data) {
   const rawFields = props.type === 'open' ? openRawFields : closedRawFields
   const numFields = props.type === 'open'
@@ -319,18 +220,6 @@ function addRow() {
     : { id, description: '', stock: '', buyDate: '', buyRate: 0, qty: 0, sellDate: '', sellPrice: 0 }
   store.addRow(props.tableKey, blank)
   editingRows.value = [blank]
-}
-
-// ── Delete ─────────────────────────────────────────────────────────────────
-function startDelete(id) {
-  deletingId.value = id
-  deleteDialog.value = true
-}
-
-function confirmDelete() {
-  store.deleteRow(props.tableKey, deletingId.value)
-  deleteDialog.value = false
-  deletingId.value = null
 }
 
 // ── Close position (sell) ──────────────────────────────────────────────────

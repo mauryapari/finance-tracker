@@ -65,7 +65,7 @@ export const useDataStore = defineStore('data', {
     },
 
     addRow(tableKey, row) {
-      this.tables[tableKey].push({ ...row, id: row.id || uuidv4() })
+      this.tables[tableKey].unshift({ ...row, id: row.id || uuidv4() })
       this.saveToStorage()
     },
 
