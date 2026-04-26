@@ -2,18 +2,42 @@
   <div class="flex flex-col h-full px-4">
     <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
       <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-base">{{ title }}</h3>
-      <Button @click="addRow" size="small" icon="pi pi-plus" label="Add Row" />
+      <div class="flex items-center gap-2">
+        <InputText
+          v-if="hasStockField"
+          v-model="filters['global'].value"
+          placeholder="Filter stock…"
+          size="small"
+          class="w-36"
+        />
+        <Button
+          v-if="hasStockField"
+          v-tooltip.top="groupByStock ? 'Ungroup' : 'Group by stock'"
+          :icon="groupByStock ? 'pi pi-list' : 'pi pi-sitemap'" text rounded
+          size="small"
+          @click="groupByStock = !groupByStock"
+        />
+        <Button size="small" icon="pi pi-plus" label="Add Row" @click="addRow" />
+      </div>
     </div>
 
     <DataTable
+      v-model:editing-rows="editingRows"
+      v-model:filters="filters"
       :value="enrichedRows"
-      editMode="row"
-      dataKey="id"
-      v-model:editingRows="editingRows"
-      showGridlines
+      edit-mode="row"
+      data-key="id"
+      :global-filter-fields="['stock']"
+      :row-group-mode="groupByStock ? 'rowspan' : undefined"
+      :group-rows-by="groupByStock ? 'stock' : undefined"
+      :sort-mode="groupByStock ? 'single' : undefined"
+      :sort-field="groupByStock ? 'stock' : undefined"
+      :sort-order="groupByStock ? 1 : undefined"
+      show-gridlines
+      striped-rows
       scrollable
-      scrollHeight="flex"
-      removableSort
+      scroll-height="flex"
+      removable-sort
       size="large"
       :row-class="rowClass"
       class="text-sm flex-1"
@@ -26,7 +50,7 @@
         :header="col.header"
         :class="col.minW"
         :frozen="col.frozen || false"
-        :alignFrozen="col.alignFrozen"
+        :align-frozen="col.alignFrozen"
       >
         <template #body="{ data }">
           <span v-if="col.bodyClass" :class="col.bodyClass(data[col.field])">
@@ -52,7 +76,7 @@
           <InputNumber
             v-else-if="fieldMap[col.field].type === 'decimal'"
             v-model="data[field]"
-            :minFractionDigits="2"
+            :min-fraction-digits="2"
             size="small"
             class="w-full"
           />
@@ -66,7 +90,7 @@
         </template>
       </Column>
 
-      <Column class="w-32 text-center" frozen alignFrozen="right">
+      <Column class="w-32 text-center" frozen align-frozen="right">
         <template #body="{ data }">
           <div class="flex gap-0.5 justify-center">
             <template v-if="isEditing(data.id)">
@@ -77,12 +101,12 @@
               <Button icon="pi pi-pencil" text rounded size="small" @click="startEdit(data)" />
               <Button
                 v-if="canClose"
+                v-tooltip.top="'Close position'"
                 icon="pi pi-sign-out"
                 text
                 rounded
                 size="small"
                 severity="warn"
-                v-tooltip.top="'Close position'"
                 @click="startClose(data)"
               />
               <Button icon="pi pi-trash" text rounded size="small" severity="danger" @click="startDelete(data.id)" />
@@ -113,34 +137,34 @@
           </div>
           <div>
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Buy Price</p>
-            <p class="font-semibold">{{ fmt(closeForm.buyPrice) }}</p>
+            <p class="font-semibold">{{ formatCurrency(closeForm.buyPrice) }}</p>
           </div>
           <div>
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">CMP</p>
             <p
               class="font-semibold"
               :class="closeForm.cmp >= closeForm.buyPrice ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'"
-            >{{ fmt(closeForm.cmp) }}</p>
+            >{{ formatCurrency(closeForm.cmp) }}</p>
           </div>
         </div>
         <div class="flex flex-col gap-1">
           <label for="close-date" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sell Date</label>
-          <InputText inputId="close-date" v-model="closeForm.sellDate" type="date" class="w-full" />
+          <InputText v-model="closeForm.sellDate" input-id="close-date" type="date" class="w-full" />
         </div>
         <div class="flex flex-col gap-1">
           <label for="close-price" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sell Price</label>
-          <InputNumber inputId="close-price" v-model="closeForm.sellPrice" :minFractionDigits="2" class="w-full" />
+          <InputNumber v-model="closeForm.sellPrice" input-id="close-price" :min-fraction-digits="2" class="w-full" />
         </div>
         <div class="flex flex-col gap-1">
           <label for="close-qty" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
             Qty to Sell <span class="normal-case font-normal">(max {{ closeForm.maxQty }})</span>
           </label>
-          <InputNumber inputId="close-qty" v-model="closeForm.qty" :min="1" :max="closeForm.maxQty" class="w-full" />
+          <InputNumber v-model="closeForm.qty" input-id="close-qty" :min="1" :max="closeForm.maxQty" class="w-full" />
         </div>
         <div v-if="closeForm.sellPrice && closeForm.qty" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm">
           <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Projected P&amp;L</p>
           <p :class="closePnl >= 0 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-500 dark:text-red-400 font-semibold'">
-            {{ fmt(closePnl) }} ({{ fmtPct(closePnlPct) }})
+            {{ formatCurrency(closePnl) }} ({{ formatPercentage(closePnlPercentage) }})
           </p>
         </div>
       </div>
@@ -161,7 +185,7 @@
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import { useDataStore } from '~/stores/data'
-import { fmt, fmtPct } from '~/composables/useCalculations'
+import { formatCurrency, formatPercentage } from '~/composables/useCalculations'
 import { useTableEditing } from '~/composables/useTableEditing'
 import { useTableDelete } from '~/composables/useTableDelete'
 import { COLUMNS, FIELD_CONFIGS, BLANK_ROWS, ENRICHMENT, CLOSE_TARGET_KEY, CLOSE_FIELD_MAP } from '~/utils/tableConfigs'
@@ -178,6 +202,9 @@ const closeDialog = ref(false)
 const closeForm   = ref({ stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null })
 
 const columns        = computed(() => COLUMNS[props.tableKey] || [])
+const hasStockField  = computed(() => columns.value.some(c => c.field === 'stock'))
+const filters        = ref({ global: { value: null } })
+const groupByStock   = ref(false)
 const fields         = computed(() => FIELD_CONFIGS[props.tableKey] || [])
 const fieldMap       = computed(() => Object.fromEntries(fields.value.map(f => [f.key, f])))
 const closeTargetKey = computed(() => CLOSE_TARGET_KEY[props.tableKey])
@@ -245,7 +272,7 @@ const closePnl = computed(() => {
   return (sellPrice - buyPrice) * qty
 })
 
-const closePnlPct = computed(() => {
+const closePnlPercentage = computed(() => {
   const { sellPrice, buyPrice } = closeForm.value
   return buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0
 })

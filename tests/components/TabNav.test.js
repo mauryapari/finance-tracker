@@ -18,6 +18,7 @@ const ALL_TABS = [
   { label: 'Closed Commodity ETFs', to: '/closed-commodity-etfs' },
   { label: 'CAGR Tracker',         to: '/cagr' },
   { label: 'Commodity CAGR',        to: '/commodity-cagr' },
+  { label: 'Budget',                to: '/budget' },
 ]
 
 // NuxtLink stub that renders an <a> so we can inspect classes and text
@@ -34,9 +35,9 @@ function makeWrapper(path = '/') {
 }
 
 describe('TabNav — renders all tabs', () => {
-  it('renders 9 tab links', () => {
+  it('renders 10 tab links', () => {
     const w = makeWrapper()
-    expect(w.findAll('a')).toHaveLength(9)
+    expect(w.findAll('a')).toHaveLength(10)
   })
 
   it.each(ALL_TABS)('renders "$label" tab', ({ label }) => {

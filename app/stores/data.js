@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
 
 const STORAGE_KEY = 'finance_tracker_data'
-const CURRENT_VERSION = 1
+const CURRENT_VERSION = 2
 
 const initialState = () => ({
   version: CURRENT_VERSION,
@@ -15,6 +15,8 @@ const initialState = () => ({
     closedCommodityEtfs: [],
     cagrEntries: [],
     commodityCagrEntries: [],
+    budgetYears: [],
+    budgetMonthly: [],
   }
 })
 
@@ -27,16 +29,16 @@ export const useDataStore = defineStore('data', {
       const netValue = positions.reduce((s, p) => s + (p.cmp || 0) * (p.qty || 0), 0)
       const totalInvested = positions.reduce((s, p) => s + (p.buyPrice || 0) * (p.qty || 0), 0)
       const profit = netValue - totalInvested
-      const profitPct = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
-      return { netValue, totalInvested, profit, profitPct }
+      const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
+      return { netValue, totalInvested, profit, profitPercentage }
     },
     commoditySummary: (state) => {
       const positions = state.tables.commodityEtfs
       const netValue = positions.reduce((s, p) => s + (p.cmp || 0) * (p.qty || 0), 0)
       const totalInvested = positions.reduce((s, p) => s + (p.buyPrice || 0) * (p.qty || 0), 0)
       const profit = netValue - totalInvested
-      const profitPct = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
-      return { netValue, totalInvested, profit, profitPct }
+      const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
+      return { netValue, totalInvested, profit, profitPercentage }
     }
   },
 
@@ -48,12 +50,12 @@ export const useDataStore = defineStore('data', {
       try {
         const parsed = JSON.parse(raw)
         if (!parsed.tables) return
-        // migrate v1: ensure all table keys exist
+        // backfill any missing table keys (handles all version migrations)
         const base = initialState()
         for (const key of Object.keys(base.tables)) {
           if (!parsed.tables[key]) parsed.tables[key] = []
         }
-        this.$patch({ version: parsed.version || 1, tables: parsed.tables })
+        this.$patch({ version: CURRENT_VERSION, tables: parsed.tables })
       } catch (e) {
         console.error('Failed to load from localStorage', e)
       }

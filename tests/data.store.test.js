@@ -24,15 +24,16 @@ beforeEach(() => {
 // Initial state
 // ---------------------------------------------------------------------------
 describe('initial state', () => {
-  it('starts with all eight empty tables', () => {
+  it('starts with all ten empty tables', () => {
     const store = useDataStore()
     const keys = ['openPositions', 'closedPositions', 'etfs', 'closedEtfs',
-      'commodityEtfs', 'closedCommodityEtfs', 'cagrEntries', 'commodityCagrEntries']
+      'commodityEtfs', 'closedCommodityEtfs', 'cagrEntries', 'commodityCagrEntries',
+      'budgetYears', 'budgetMonthly']
     for (const k of keys) expect(store.tables[k]).toEqual([])
   })
 
-  it('has version 1', () => {
-    expect(useDataStore().version).toBe(1)
+  it('has version 2', () => {
+    expect(useDataStore().version).toBe(2)
   })
 })
 
@@ -112,12 +113,21 @@ describe('updateCmp', () => {
     expect(store.tables.openPositions[0].cmp).toBe(250)
   })
 
-  it('does NOT call saveToStorage', () => {
+  it('does NOT call saveToStorage when CMP is below peakPrice', () => {
     const store = useDataStore()
-    store.addRow('openPositions', { id: 'r1', stock: 'TCS', cmp: 100 })
+    store.addRow('openPositions', { id: 'r1', stock: 'TCS', cmp: 100, peakPrice: 500 })
     localStorage.setItem.mockClear()
-    store.updateCmp('openPositions', 'r1', 300)
+    store.updateCmp('openPositions', 'r1', 300) // 300 < 500 → no peak update, no save
     expect(localStorage.setItem).not.toHaveBeenCalled()
+  })
+
+  it('DOES call saveToStorage when CMP exceeds peakPrice', () => {
+    const store = useDataStore()
+    store.addRow('openPositions', { id: 'r1', stock: 'TCS', cmp: 100, peakPrice: 200 })
+    localStorage.setItem.mockClear()
+    store.updateCmp('openPositions', 'r1', 300) // 300 > 200 → peak updated, saved
+    expect(localStorage.setItem).toHaveBeenCalled()
+    expect(store.tables.openPositions[0].peakPrice).toBe(300)
   })
 })
 
@@ -204,7 +214,7 @@ describe('importAll', () => {
 describe('stockSummary getter', () => {
   it('returns zeros when table is empty', () => {
     const store = useDataStore()
-    expect(store.stockSummary).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPct: 0 })
+    expect(store.stockSummary).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPercentage: 0 })
   })
 
   it('calculates summary for multiple positions', () => {
@@ -217,13 +227,13 @@ describe('stockSummary getter', () => {
     expect(s.totalInvested).toBe(2000)
     expect(s.netValue).toBe(2500)
     expect(s.profit).toBe(500)
-    expect(s.profitPct).toBe(25)
+    expect(s.profitPercentage).toBe(25)
   })
 
-  it('returns profitPct 0 when nothing invested', () => {
+  it('returns profitPercentage 0 when nothing invested', () => {
     const store = useDataStore()
     store.tables.openPositions = [{ buyPrice: 0, qty: 5, cmp: 100 }]
-    expect(store.stockSummary.profitPct).toBe(0)
+    expect(store.stockSummary.profitPercentage).toBe(0)
   })
 })
 
@@ -233,7 +243,7 @@ describe('stockSummary getter', () => {
 describe('commoditySummary getter', () => {
   it('returns zeros when table is empty', () => {
     const store = useDataStore()
-    expect(store.commoditySummary).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPct: 0 })
+    expect(store.commoditySummary).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPercentage: 0 })
   })
 
   it('calculates summary for commodity positions', () => {
@@ -243,6 +253,6 @@ describe('commoditySummary getter', () => {
     expect(s.totalInvested).toBe(2000)
     expect(s.netValue).toBe(2400)
     expect(s.profit).toBe(400)
-    expect(s.profitPct).toBe(20)
+    expect(s.profitPercentage).toBe(20)
   })
 })

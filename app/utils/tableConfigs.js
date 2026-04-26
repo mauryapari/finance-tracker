@@ -1,8 +1,8 @@
 import {
-  fmt, fmtPct, gainClass,
-  calcDays, calcBuyValue, calcCurrentValue, calcPctGain,
-  calcAnnualGainPct, calcDropFromPeak, calcTargetValue,
-  calcTotalPotentialGain, calcRemainingGain,
+  formatCurrency, formatPercentage, formatDuration, gainClass,
+  calculateDays, calculateBuyValue, calculateCurrentValue, calculatePercentageGain,
+  calculateAnnualGainPercentage, calculateDropFromPeak, calculateTargetValue,
+  calculateTotalPotentialGain, calculateRemainingGain,
 } from "~/composables/useCalculations";
 
 const STOCK_CLASS = () =>
@@ -13,41 +13,37 @@ const STOCK_CLASS = () =>
 export const COLUMNS = {
   openPositions: [
     { field: "stock", header: "Stock", minW: "min-w-28", frozen: true, alignFrozen: "left", bodyClass: STOCK_CLASS },
-    { field: "stockExchange", header: "Exchange", minW: "min-w-24" },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: fmt },
+    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
-    { field: "cmp", header: "CMP", minW: "min-w-28", format: fmt },
-    { field: "peakPrice", header: "Peak", minW: "min-w-28", format: fmt },
+    { field: "cmp", header: "CMP", minW: "min-w-28", format: formatCurrency },
+    { field: "peakPrice", header: "Peak", minW: "min-w-28", format: formatCurrency },
     {
-      field: "dropFromPeak", header: "Drop%", minW: "min-w-24", format: fmtPct,
+      field: "dropFromPeak", header: "Drop%", minW: "min-w-24", format: formatPercentage,
       bodyClass: (n) => n > 20 ? "text-red-500 dark:text-red-400 font-medium" : "",
     },
-    { field: "currentValue", header: "Curr Value", minW: "min-w-28", format: fmt },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "annualGainPct", header: "Annual%", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "targetPrice", header: "Target", minW: "min-w-28", format: formatCurrency },
+    { field: "totalPotentialGain", header: "Total Pot%", minW: "min-w-28", format: formatPercentage },
+    { field: "remainingGain", header: "Remaining%", minW: "min-w-28", format: formatPercentage, bodyClass: (n) => n < 0 ? "text-green-600 dark:text-green-400 font-medium" : "" },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
+    { field: "annualGainPercentage", header: "Annual%", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
     { field: "strategyName", header: "Strategy", minW: "min-w-36" },
-    { field: "targetPrice", header: "Target", minW: "min-w-28", format: fmt },
-    { field: "totalPotentialGain", header: "Total Pot%", minW: "min-w-28", format: fmtPct },
-    { field: "remainingGain", header: "Remaining%", minW: "min-w-28", format: fmtPct, bodyClass: (n) => n < 0 ? "text-green-600 dark:text-green-400 font-medium" : "" },
-    { field: "targetValue", header: "Target Val", minW: "min-w-28", format: fmt },
     { field: "description", header: "Description", minW: "min-w-40" },
+    { field: "stockExchange", header: "Exchange", minW: "min-w-24" },
   ],
   closedPositions: [
     { field: "stock", header: "Stock", minW: "min-w-28", frozen: true, alignFrozen: "left", bodyClass: STOCK_CLASS },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: fmt },
+    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
     { field: "sellDate", header: "Sell Date", minW: "min-w-32" },
-    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: fmt },
-    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: fmt },
-    { field: "gain", header: "Gain", minW: "min-w-28", format: fmt, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "annualGainPct", header: "Annual%", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
+    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: formatCurrency },
+    { field: "gain", header: "Gain", minW: "min-w-28", format: formatCurrency, bodyClass: gainClass },
+    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: formatCurrency },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "annualGainPercentage", header: "Annual%", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
     { field: "description", header: "Description", minW: "min-w-40" },
   ],
   etfs: [
@@ -55,67 +51,61 @@ export const COLUMNS = {
     { field: "stock", header: "Stock", frozen: true, alignFrozen: "left", minW: "min-w-28", bodyClass: STOCK_CLASS },
     { field: "stockExchange", header: "Exchange", minW: "min-w-24" },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: fmt },
+    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
-    { field: "cmp", header: "CMP", minW: "min-w-28", format: fmt },
-    { field: "currentValue", header: "Curr Value", minW: "min-w-28", format: fmt },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
-    { field: "target", header: "Target", minW: "min-w-28", format: fmt },
+    { field: "cmp", header: "CMP", minW: "min-w-28", format: formatCurrency },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
+    { field: "target", header: "Target", minW: "min-w-28", format: formatCurrency },
   ],
   closedEtfs: [
     { field: "type", header: "Type", minW: "min-w-24" },
     { field: "stock", header: "Stock", frozen: true, alignFrozen: "left", minW: "min-w-28", bodyClass: STOCK_CLASS },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: fmt },
+    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
     { field: "sellDate", header: "Sell Date", minW: "min-w-32" },
-    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: fmt },
-    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: fmt },
-    { field: "gain", header: "Gain", minW: "min-w-28", format: fmt, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "annualGainPct", header: "Annual%", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
+    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: formatCurrency },
+    { field: "gain", header: "Gain", minW: "min-w-28", format: formatCurrency, bodyClass: gainClass },
+    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: formatCurrency },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "annualGainPercentage", header: "Annual%", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
   ],
   commodityEtfs: [
     { field: "type", header: "Type", minW: "min-w-24" },
     { field: "stock", header: "Stock", frozen: true, alignFrozen: "left", minW: "min-w-28", bodyClass: STOCK_CLASS },
     { field: "stockExchange", header: "Exchange", minW: "min-w-24" },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: fmt },
+    { field: "buyPrice", header: "Buy Price", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
-    { field: "cmp", header: "CMP", minW: "min-w-28", format: fmt },
-    { field: "currentValue", header: "Curr Value", minW: "min-w-28", format: fmt },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
+    { field: "cmp", header: "CMP", minW: "min-w-28", format: formatCurrency },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
   ],
   closedCommodityEtfs: [
     { field: "stock", header: "Stock", frozen: true, alignFrozen: "left", minW: "min-w-28", bodyClass: STOCK_CLASS },
     { field: "buyDate", header: "Buy Date", minW: "min-w-32" },
-    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: fmt },
+    { field: "buyRate", header: "Buy Rate", minW: "min-w-28", format: formatCurrency },
     { field: "qty", header: "Qty", minW: "min-w-20" },
-    { field: "buyValue", header: "Buy Value", minW: "min-w-28", format: fmt },
     { field: "sellDate", header: "Sell Date", minW: "min-w-32" },
-    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: fmt },
-    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: fmt },
-    { field: "gain", header: "Gain", minW: "min-w-28", format: fmt, bodyClass: gainClass },
-    { field: "days", header: "Days", minW: "min-w-20" },
-    { field: "pctGain", header: "% Gain", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
-    { field: "annualGainPct", header: "Annual%", minW: "min-w-24", format: fmtPct, bodyClass: gainClass },
+    { field: "sellPrice", header: "Sell Price", minW: "min-w-28", format: formatCurrency },
+    { field: "gain", header: "Gain", minW: "min-w-28", format: formatCurrency, bodyClass: gainClass },
+    { field: "days", header: "Days", minW: "min-w-20", format: formatDuration },
+    { field: "sellValue", header: "Sell Value", minW: "min-w-28", format: formatCurrency },
+    { field: "percentageGain", header: "% Gain", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
+    { field: "annualGainPercentage", header: "Annual%", minW: "min-w-24", format: formatPercentage, bodyClass: gainClass },
   ],
   cagrEntries: [
     { field: "text", header: "Description", frozen: true, alignFrozen: "left", minW: "min-w-40" },
     { field: "date", header: "Date", minW: "min-w-32" },
-    { field: "amount", header: "Amount", minW: "min-w-32", format: fmt },
+    { field: "amount", header: "Amount", minW: "min-w-32", format: formatCurrency },
     { field: "investmentOrOut", header: "Type", minW: "min-w-24" },
   ],
   commodityCagrEntries: [
     { field: "text", header: "Description", frozen: true, alignFrozen: "left", minW: "min-w-40" },
     { field: "date", header: "Date", minW: "min-w-32" },
-    { field: "amount", header: "Amount", minW: "min-w-32", format: fmt },
+    { field: "amount", header: "Amount", minW: "min-w-32", format: formatCurrency },
   ],
 };
 
@@ -124,13 +114,13 @@ export const COLUMNS = {
 export const FIELD_CONFIGS = {
   openPositions: [
     { key: "stock", label: "Stock" },
-    { key: "stockExchange", label: "Exchange", type: "select", options: ["NSE", "BSE"] },
     { key: "buyDate", label: "Buy Date", type: "date" },
     { key: "buyPrice", label: "Buy Price", type: "decimal" },
     { key: "qty", label: "Qty", type: "number" },
     { key: "strategyName", label: "Strategy" },
     { key: "targetPrice", label: "Target", type: "decimal" },
     { key: "description", label: "Description" },
+    { key: "stockExchange", label: "Exchange", type: "select", options: ["NSE", "BSE"] },
   ],
   closedPositions: [
     { key: "stock", label: "Stock" },
@@ -139,16 +129,17 @@ export const FIELD_CONFIGS = {
     { key: "qty", label: "Qty", type: "number" },
     { key: "sellDate", label: "Sell Date", type: "date" },
     { key: "sellPrice", label: "Sell Price", type: "decimal" },
+    { key: "sellValue", label: "Sell Value", type: "decimal" },
     { key: "description", label: "Description" },
   ],
   etfs: [
     { key: "type", label: "Type" },
     { key: "stock", label: "Stock Symbol" },
-    { key: "stockExchange", label: "Exchange", type: "select", options: ["NSE", "BSE"] },
     { key: "buyDate", label: "Buy Date", type: "date" },
     { key: "buyPrice", label: "Buy Price", type: "decimal" },
     { key: "qty", label: "Qty", type: "number" },
     { key: "target", label: "Target", type: "decimal" },
+    { key: "stockExchange", label: "Exchange", type: "select", options: ["NSE", "BSE"] },
   ],
   closedEtfs: [
     { key: "type", label: "Type" },
@@ -158,6 +149,7 @@ export const FIELD_CONFIGS = {
     { key: "qty", label: "Qty", type: "number" },
     { key: "sellDate", label: "Sell Date", type: "date" },
     { key: "sellPrice", label: "Sell Price", type: "decimal" },
+    { key: "sellValue", label: "Sell Value", type: "decimal" },
   ],
   commodityEtfs: [
     { key: "type", label: "Type" },
@@ -174,6 +166,7 @@ export const FIELD_CONFIGS = {
     { key: "qty", label: "Qty", type: "number" },
     { key: "sellDate", label: "Sell Date", type: "date" },
     { key: "sellPrice", label: "Sell Price", type: "decimal" },
+    { key: "sellValue", label: "Sell Value", type: "decimal" },
   ],
   cagrEntries: [
     { key: "text", label: "Description" },
@@ -215,70 +208,70 @@ export const BLANK_ROWS = {
 };
 
 // ── Row enrichment functions ───────────────────────────────────────────────
-// openPositions receives totalCurrentValue as a second arg for portfolioPct
+// openPositions receives totalCurrentValue as a second arg for portfolioPercentage
 export const ENRICHMENT = {
   openPositions: (row, totalCurrentValue) => {
-    const days = calcDays(row.buyDate)
-    const buyValue = calcBuyValue(row.buyPrice, row.qty)
-    const currentValue = calcCurrentValue(row.cmp, row.qty)
-    const pctGain = calcPctGain(currentValue, buyValue)
-    const targetValue = calcTargetValue(row.targetPrice, row.qty)
+    const days = calculateDays(row.buyDate)
+    const buyValue = calculateBuyValue(row.buyPrice, row.qty)
+    const currentValue = calculateCurrentValue(row.cmp, row.qty)
+    const percentageGain = calculatePercentageGain(currentValue, buyValue)
+    const targetValue = calculateTargetValue(row.targetPrice, row.qty)
     return {
       ...row,
       days,
       buyValue,
       currentValue,
-      pctGain,
-      annualGainPct: calcAnnualGainPct(pctGain, days),
-      dropFromPeak: calcDropFromPeak(row.peakPrice, row.cmp),
+      percentageGain,
+      annualGainPercentage: calculateAnnualGainPercentage(percentageGain, days),
+      dropFromPeak: calculateDropFromPeak(row.peakPrice, row.cmp),
       targetValue,
-      totalPotentialGain: calcTotalPotentialGain(targetValue, buyValue),
-      remainingGain: calcRemainingGain(targetValue, currentValue),
-      portfolioPct: totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0,
+      totalPotentialGain: calculateTotalPotentialGain(targetValue, buyValue),
+      remainingGain: calculateRemainingGain(targetValue, currentValue),
+      portfolioPercentage: totalCurrentValue > 0 ? (currentValue / totalCurrentValue) * 100 : 0,
       _targetHit: row.cmp > 0 && row.targetPrice > 0 && row.cmp >= row.targetPrice,
     }
   },
   closedPositions: (row) => {
-    const buyValue = calcBuyValue(row.buyRate, row.qty)
+    const buyValue = calculateBuyValue(row.buyRate, row.qty)
     const sellValue = (row.sellPrice || 0) * (row.qty || 0)
     const gain = sellValue - buyValue
-    const pctGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
+    const percentageGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
     const buyDate = row.buyDate ? new Date(row.buyDate) : null
     const sellDate = row.sellDate ? new Date(row.sellDate) : null
     const days = buyDate && sellDate ? Math.max(1, Math.floor((sellDate - buyDate) / 86400000)) : 0
-    return { ...row, buyValue, sellValue, gain, pctGain, days, annualGainPct: calcAnnualGainPct(pctGain, days) }
+    return { ...row, buyValue, sellValue, gain, percentageGain, days, annualGainPercentage: calculateAnnualGainPercentage(percentageGain, days) }
   },
   etfs: (row) => {
-    const days = calcDays(row.buyDate)
-    const buyValue = calcBuyValue(row.buyPrice, row.qty)
-    const currentValue = calcCurrentValue(row.cmp, row.qty)
-    return { ...row, days, buyValue, currentValue, pctGain: calcPctGain(currentValue, buyValue) }
+    const days = calculateDays(row.buyDate)
+    const buyValue = calculateBuyValue(row.buyPrice, row.qty)
+    const currentValue = calculateCurrentValue(row.cmp, row.qty)
+    return { ...row, days, buyValue, currentValue, percentageGain: calculatePercentageGain(currentValue, buyValue) }
   },
   closedEtfs: (row) => {
-    const buyValue = calcBuyValue(row.buyRate, row.qty)
+    const buyValue = calculateBuyValue(row.buyRate, row.qty)
     const sellValue = (row.sellPrice || 0) * (row.qty || 0)
     const gain = sellValue - buyValue
-    const pctGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
+    const percentageGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
     const buyDate = row.buyDate ? new Date(row.buyDate) : null
     const sellDate = row.sellDate ? new Date(row.sellDate) : null
     const days = buyDate && sellDate ? Math.max(1, Math.floor((sellDate - buyDate) / 86400000)) : 0
-    return { ...row, buyValue, sellValue, gain, pctGain, days, annualGainPct: calcAnnualGainPct(pctGain, days) }
+    return { ...row, buyValue, sellValue, gain, percentageGain, days, annualGainPercentage: calculateAnnualGainPercentage(percentageGain, days) }
   },
   commodityEtfs: (row) => {
-    const days = calcDays(row.buyDate)
-    const buyValue = calcBuyValue(row.buyPrice, row.qty)
-    const currentValue = calcCurrentValue(row.cmp, row.qty)
-    return { ...row, days, buyValue, currentValue, pctGain: calcPctGain(currentValue, buyValue) }
+    const days = calculateDays(row.buyDate)
+    const buyValue = calculateBuyValue(row.buyPrice, row.qty)
+    const currentValue = calculateCurrentValue(row.cmp, row.qty)
+    return { ...row, days, buyValue, currentValue, percentageGain: calculatePercentageGain(currentValue, buyValue) }
   },
   closedCommodityEtfs: (row) => {
-    const buyValue = calcBuyValue(row.buyRate, row.qty)
+    const buyValue = calculateBuyValue(row.buyRate, row.qty)
     const sellValue = (row.sellPrice || 0) * (row.qty || 0)
     const gain = sellValue - buyValue
-    const pctGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
+    const percentageGain = buyValue > 0 ? (gain / buyValue) * 100 : 0
     const buyDate = row.buyDate ? new Date(row.buyDate) : null
     const sellDate = row.sellDate ? new Date(row.sellDate) : null
     const days = buyDate && sellDate ? Math.max(1, Math.floor((sellDate - buyDate) / 86400000)) : 0
-    return { ...row, buyValue, sellValue, gain, pctGain, days, annualGainPct: calcAnnualGainPct(pctGain, days) }
+    return { ...row, buyValue, sellValue, gain, percentageGain, days, annualGainPercentage: calculateAnnualGainPercentage(percentageGain, days) }
   },
 };
 

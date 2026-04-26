@@ -20,5 +20,11 @@ export default defineNuxtConfig({
   },
   // @ts-expect-error nitro is valid at runtime; type defs lag behind
   nitro: { preset: 'netlify' },
+  app: {
+    head: {
+      htmlAttrs: { lang: 'en' },
+      title: 'Finance Tracker',
+    },
+  },
   devtools: { enabled: true }
 })

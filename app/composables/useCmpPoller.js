@@ -30,6 +30,7 @@ export function useCmpPoller() {
         }
       }
     } catch (e) {
+      console.warn(`Failed to fetch price for ${symbol}:`, e)
       // silently skip failed symbols
     }
   }
@@ -44,6 +45,7 @@ export function useCmpPoller() {
         store.updatePeak('openPositions', position.id, data.peak)
       }
     } catch (e) {
+      console.warn(`Failed to fetch peak for ${symbol}:`, e)
       // silently skip
     }
   }

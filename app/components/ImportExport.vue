@@ -4,7 +4,7 @@
     <Button label="Export" icon="pi pi-download" size="small" outlined @click="exportData" />
     <label aria-label="Import JSON">
       <Button label="Import" icon="pi pi-upload" size="small" outlined as="span" class="cursor-pointer" />
-      <input type="file" accept="application/json,.json" class="hidden" @change="importData" />
+      <input type="file" accept="application/json,.json" class="hidden" @change="importData" >
     </label>
     <span v-if="message" class="text-xs" :class="error ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'">{{ message }}</span>
   </div>

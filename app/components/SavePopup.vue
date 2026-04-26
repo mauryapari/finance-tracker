@@ -1,17 +1,17 @@
 <template>
   <div
+    v-click-outside="() => $emit('cancel')"
     class="absolute z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-3 flex gap-2 items-center"
     style="bottom: calc(100% + 6px); left: 0"
-    v-click-outside="() => $emit('cancel')"
   >
     <template v-if="mode === 'delete'">
       <span class="text-sm text-gray-600">Delete this row?</span>
-      <button @click="$emit('confirm')" class="btn-danger">Delete</button>
-      <button @click="$emit('cancel')" class="btn-ghost">Cancel</button>
+      <button class="btn-danger" @click="$emit('confirm')">Delete</button>
+      <button class="btn-ghost" @click="$emit('cancel')">Cancel</button>
     </template>
     <template v-else>
-      <button @click="$emit('confirm')" class="btn-primary">Save</button>
-      <button @click="$emit('cancel')" class="btn-ghost">Cancel</button>
+      <button class="btn-primary" @click="$emit('confirm')">Save</button>
+      <button class="btn-ghost" @click="$emit('cancel')">Cancel</button>
     </template>
   </div>
 </template>

@@ -1,43 +1,43 @@
-export function calcDays(buyDate) {
+export function calculateDays(buyDate) {
   if (!buyDate) return 0
   const buy = new Date(buyDate)
   const today = new Date()
   return Math.max(1, Math.floor((today - buy) / 86400000))
 }
 
-export function calcBuyValue(price, qty) {
+export function calculateBuyValue(price, qty) {
   return (price || 0) * (qty || 0)
 }
 
-export function calcCurrentValue(cmp, qty) {
+export function calculateCurrentValue(cmp, qty) {
   return (cmp || 0) * (qty || 0)
 }
 
-export function calcPctGain(currentValue, buyValue) {
+export function calculatePercentageGain(currentValue, buyValue) {
   if (!buyValue) return 0
   return ((currentValue - buyValue) / buyValue) * 100
 }
 
-export function calcAnnualGainPct(pctGain, days) {
+export function calculateAnnualGainPercentage(percentageGain, days) {
   if (!days) return 0
-  return (pctGain / days) * 365
+  return (percentageGain / days) * 365
 }
 
-export function calcDropFromPeak(peakPrice, cmp) {
+export function calculateDropFromPeak(peakPrice, cmp) {
   if (!peakPrice) return 0
   return ((peakPrice - cmp) / peakPrice) * 100
 }
 
-export function calcTargetValue(targetPrice, qty) {
+export function calculateTargetValue(targetPrice, qty) {
   return (targetPrice || 0) * (qty || 0)
 }
 
-export function calcTotalPotentialGain(targetValue, buyValue) {
+export function calculateTotalPotentialGain(targetValue, buyValue) {
   if (!buyValue) return 0
   return ((targetValue - buyValue) / buyValue) * 100
 }
 
-export function calcRemainingGain(targetValue, currentValue) {
+export function calculateRemainingGain(targetValue, currentValue) {
   if (!currentValue) return 0
   return ((targetValue - currentValue) / currentValue) * 100
 }
@@ -67,20 +67,31 @@ export function xirr(cashflows, guess = 0.1) {
   return rate
 }
 
-export const fmt = n =>
+export const formatCurrency = n =>
   n != null ? Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
 
-export const fmtPct = n =>
+export const formatPercentage = n =>
   n != null ? Number(n).toFixed(2) + '%' : ''
+
+export const formatDuration = n => {
+  if (!n || n <= 0) return '—'
+  const y = Math.floor(n / 365)
+  const rem = n % 365
+  const m = Math.floor(rem / 30)
+  const d = rem % 30
+  if (y >= 1) return m > 0 ? `${y}Y ${m}M` : `${y}Y`
+  if (m >= 1) return d > 0 ? `${m}M ${d}D` : `${m}M`
+  return `${n}D`
+}
 
 export const gainClass = n =>
   n >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-500 dark:text-red-400 font-medium'
 
 export function calcPortfolioSummary(positions, cagrEntries) {
-  const netValue = positions.reduce((s, p) => s + calcCurrentValue(p.cmp, p.qty), 0)
-  const totalInvested = positions.reduce((s, p) => s + calcBuyValue(p.buyPrice, p.qty), 0)
+  const netValue = positions.reduce((s, p) => s + calculateCurrentValue(p.cmp, p.qty), 0)
+  const totalInvested = positions.reduce((s, p) => s + calculateBuyValue(p.buyPrice, p.qty), 0)
   const profit = netValue - totalInvested
-  const profitPct = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
+  const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
 
   let cagr = 0
   if (cagrEntries && cagrEntries.length > 0) {
@@ -89,8 +100,8 @@ export function calcPortfolioSummary(positions, cagrEntries) {
       date: e.date
     }))
     cashflows.push({ amount: netValue, date: new Date().toISOString().split('T')[0] })
-    try { cagr = xirr(cashflows) * 100 } catch (e) { cagr = 0 }
+    try { cagr = xirr(cashflows) * 100 } catch (err) { console.warn(err); cagr = 0 }
   }
 
-  return { netValue, totalInvested, profit, profitPct, cagr }
+  return { netValue, totalInvested, profit, profitPercentage, cagr }
 }

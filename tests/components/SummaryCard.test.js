@@ -7,7 +7,7 @@ function mkSummary(overrides = {}) {
     netValue: 100000,
     totalInvested: 80000,
     profit: 20000,
-    profitPct: 25,
+    profitPercentage: 25,
     ...overrides,
   }
 }
@@ -29,8 +29,8 @@ describe('SummaryCard', () => {
     expect(w.text()).toContain('80,000')
   })
 
-  it('renders profitPct formatted to 2 decimal places', () => {
-    const w = mount(SummaryCard, { props: { title: 'T', summary: mkSummary({ profitPct: 25 }), cagr: 0 } })
+  it('renders profitPercentage formatted to 2 decimal places', () => {
+    const w = mount(SummaryCard, { props: { title: 'T', summary: mkSummary({ profitPercentage: 25 }), cagr: 0 } })
     expect(w.text()).toContain('25.00%')
   })
 
@@ -46,7 +46,7 @@ describe('SummaryCard', () => {
   })
 
   it('applies red class when profit is negative', () => {
-    const w = mount(SummaryCard, { props: { title: 'T', summary: mkSummary({ profit: -200, profitPct: -5 }), cagr: 0 } })
+    const w = mount(SummaryCard, { props: { title: 'T', summary: mkSummary({ profit: -200, profitPercentage: -5 }), cagr: 0 } })
     const profitEl = w.findAll('p').find(p => p.text().includes('-'))
     expect(profitEl?.classes()).toContain('text-red-500')
   })

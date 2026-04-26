@@ -33,5 +33,6 @@ const tabs = [
   { to: "/closed-commodity-etfs", label: "Closed Commodity ETFs" },
   { to: "/cagr", label: "CAGR Tracker" },
   { to: "/commodity-cagr", label: "Commodity CAGR" },
+  { to: "/budget", label: "Budget" },
 ];
 </script>

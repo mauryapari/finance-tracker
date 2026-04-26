@@ -1,127 +1,127 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import {
-  calcDays,
-  calcBuyValue,
-  calcCurrentValue,
-  calcPctGain,
-  calcAnnualGainPct,
-  calcDropFromPeak,
-  calcTargetValue,
-  calcTotalPotentialGain,
-  calcRemainingGain,
+  calculateDays,
+  calculateBuyValue,
+  calculateCurrentValue,
+  calculatePercentageGain,
+  calculateAnnualGainPercentage,
+  calculateDropFromPeak,
+  calculateTargetValue,
+  calculateTotalPotentialGain,
+  calculateRemainingGain,
   xirr,
   calcPortfolioSummary,
 } from '../app/composables/useCalculations.js'
 
-// Pin "today" so calcDays is deterministic
+// Pin "today" so calculateDays is deterministic
 const FIXED_NOW = new Date('2025-01-01T00:00:00.000Z')
 beforeAll(() => { vi.useFakeTimers(); vi.setSystemTime(FIXED_NOW) })
 afterAll(() => { vi.useRealTimers() })
 
 // ---------------------------------------------------------------------------
-// calcDays
+// calculateDays
 // ---------------------------------------------------------------------------
-describe('calcDays', () => {
-  it('returns 0 for null', () => expect(calcDays(null)).toBe(0))
-  it('returns 0 for undefined', () => expect(calcDays(undefined)).toBe(0))
-  it('returns 0 for empty string', () => expect(calcDays('')).toBe(0))
+describe('calculateDays', () => {
+  it('returns 0 for null', () => expect(calculateDays(null)).toBe(0))
+  it('returns 0 for undefined', () => expect(calculateDays(undefined)).toBe(0))
+  it('returns 0 for empty string', () => expect(calculateDays('')).toBe(0))
 
   it('returns at least 1 for today', () => {
-    expect(calcDays('2025-01-01')).toBeGreaterThanOrEqual(1)
+    expect(calculateDays('2025-01-01')).toBeGreaterThanOrEqual(1)
   })
 
   it('returns correct days for an exact past date', () => {
     // 365 days before fixed "today"
-    expect(calcDays('2024-01-01')).toBe(366) // 2024 is a leap year → 366 days
+    expect(calculateDays('2024-01-01')).toBe(366) // 2024 is a leap year → 366 days
   })
 
   it('returns 1 (minimum) even for same-day buy', () => {
-    expect(calcDays('2025-01-01')).toBeGreaterThanOrEqual(1)
+    expect(calculateDays('2025-01-01')).toBeGreaterThanOrEqual(1)
   })
 })
 
 // ---------------------------------------------------------------------------
-// calcBuyValue
+// calculateBuyValue
 // ---------------------------------------------------------------------------
-describe('calcBuyValue', () => {
-  it('returns 0 for null inputs', () => expect(calcBuyValue(null, null)).toBe(0))
-  it('returns 0 when price is 0', () => expect(calcBuyValue(0, 100)).toBe(0))
-  it('returns 0 when qty is 0', () => expect(calcBuyValue(100, 0)).toBe(0))
-  it('calculates correctly', () => expect(calcBuyValue(150, 10)).toBe(1500))
-  it('handles fractional qty', () => expect(calcBuyValue(100, 0.5)).toBeCloseTo(50))
+describe('calculateBuyValue', () => {
+  it('returns 0 for null inputs', () => expect(calculateBuyValue(null, null)).toBe(0))
+  it('returns 0 when price is 0', () => expect(calculateBuyValue(0, 100)).toBe(0))
+  it('returns 0 when qty is 0', () => expect(calculateBuyValue(100, 0)).toBe(0))
+  it('calculates correctly', () => expect(calculateBuyValue(150, 10)).toBe(1500))
+  it('handles fractional qty', () => expect(calculateBuyValue(100, 0.5)).toBeCloseTo(50))
 })
 
 // ---------------------------------------------------------------------------
-// calcCurrentValue
+// calculateCurrentValue
 // ---------------------------------------------------------------------------
-describe('calcCurrentValue', () => {
-  it('returns 0 for null inputs', () => expect(calcCurrentValue(null, null)).toBe(0))
-  it('calculates correctly', () => expect(calcCurrentValue(200, 5)).toBe(1000))
-  it('handles undefined cmp', () => expect(calcCurrentValue(undefined, 10)).toBe(0))
+describe('calculateCurrentValue', () => {
+  it('returns 0 for null inputs', () => expect(calculateCurrentValue(null, null)).toBe(0))
+  it('calculates correctly', () => expect(calculateCurrentValue(200, 5)).toBe(1000))
+  it('handles undefined cmp', () => expect(calculateCurrentValue(undefined, 10)).toBe(0))
 })
 
 // ---------------------------------------------------------------------------
-// calcPctGain
+// calculatePercentageGain
 // ---------------------------------------------------------------------------
-describe('calcPctGain', () => {
-  it('returns 0 when buyValue is 0', () => expect(calcPctGain(150, 0)).toBe(0))
-  it('returns 0 when buyValue is falsy', () => expect(calcPctGain(150, null)).toBe(0))
-  it('returns 50% for a 50% gain', () => expect(calcPctGain(150, 100)).toBe(50))
-  it('returns -20% for a 20% loss', () => expect(calcPctGain(80, 100)).toBe(-20))
-  it('returns 0 for no change', () => expect(calcPctGain(100, 100)).toBe(0))
+describe('calculatePercentageGain', () => {
+  it('returns 0 when buyValue is 0', () => expect(calculatePercentageGain(150, 0)).toBe(0))
+  it('returns 0 when buyValue is falsy', () => expect(calculatePercentageGain(150, null)).toBe(0))
+  it('returns 50% for a 50% gain', () => expect(calculatePercentageGain(150, 100)).toBe(50))
+  it('returns -20% for a 20% loss', () => expect(calculatePercentageGain(80, 100)).toBe(-20))
+  it('returns 0 for no change', () => expect(calculatePercentageGain(100, 100)).toBe(0))
 })
 
 // ---------------------------------------------------------------------------
-// calcAnnualGainPct
+// calculateAnnualGainPercentage
 // ---------------------------------------------------------------------------
-describe('calcAnnualGainPct', () => {
-  it('returns 0 when days is 0', () => expect(calcAnnualGainPct(50, 0)).toBe(0))
-  it('returns 0 when days is falsy', () => expect(calcAnnualGainPct(50, null)).toBe(0))
+describe('calculateAnnualGainPercentage', () => {
+  it('returns 0 when days is 0', () => expect(calculateAnnualGainPercentage(50, 0)).toBe(0))
+  it('returns 0 when days is falsy', () => expect(calculateAnnualGainPercentage(50, null)).toBe(0))
   it('returns same value for 365-day holding', () => {
-    expect(calcAnnualGainPct(50, 365)).toBeCloseTo(50)
+    expect(calculateAnnualGainPercentage(50, 365)).toBeCloseTo(50)
   })
   it('annualises a short holding', () => {
     // 10% gain over 73 days → (10/73)*365 = 50%
-    expect(calcAnnualGainPct(10, 73)).toBeCloseTo(50)
+    expect(calculateAnnualGainPercentage(10, 73)).toBeCloseTo(50)
   })
 })
 
 // ---------------------------------------------------------------------------
-// calcDropFromPeak
+// calculateDropFromPeak
 // ---------------------------------------------------------------------------
-describe('calcDropFromPeak', () => {
-  it('returns 0 when peakPrice is 0', () => expect(calcDropFromPeak(0, 80)).toBe(0))
-  it('returns 0 when peakPrice is null', () => expect(calcDropFromPeak(null, 80)).toBe(0))
-  it('calculates 20% drop correctly', () => expect(calcDropFromPeak(100, 80)).toBe(20))
-  it('returns 0 when at peak', () => expect(calcDropFromPeak(100, 100)).toBe(0))
-  it('returns negative value when above peak', () => expect(calcDropFromPeak(100, 120)).toBe(-20))
+describe('calculateDropFromPeak', () => {
+  it('returns 0 when peakPrice is 0', () => expect(calculateDropFromPeak(0, 80)).toBe(0))
+  it('returns 0 when peakPrice is null', () => expect(calculateDropFromPeak(null, 80)).toBe(0))
+  it('calculates 20% drop correctly', () => expect(calculateDropFromPeak(100, 80)).toBe(20))
+  it('returns 0 when at peak', () => expect(calculateDropFromPeak(100, 100)).toBe(0))
+  it('returns negative value when above peak', () => expect(calculateDropFromPeak(100, 120)).toBe(-20))
 })
 
 // ---------------------------------------------------------------------------
-// calcTargetValue
+// calculateTargetValue
 // ---------------------------------------------------------------------------
-describe('calcTargetValue', () => {
-  it('returns 0 for null inputs', () => expect(calcTargetValue(null, null)).toBe(0))
-  it('calculates correctly', () => expect(calcTargetValue(200, 10)).toBe(2000))
+describe('calculateTargetValue', () => {
+  it('returns 0 for null inputs', () => expect(calculateTargetValue(null, null)).toBe(0))
+  it('calculates correctly', () => expect(calculateTargetValue(200, 10)).toBe(2000))
 })
 
 // ---------------------------------------------------------------------------
-// calcTotalPotentialGain
+// calculateTotalPotentialGain
 // ---------------------------------------------------------------------------
-describe('calcTotalPotentialGain', () => {
-  it('returns 0 when buyValue is 0', () => expect(calcTotalPotentialGain(2000, 0)).toBe(0))
-  it('calculates 100% gain correctly', () => expect(calcTotalPotentialGain(2000, 1000)).toBe(100))
-  it('calculates a loss correctly', () => expect(calcTotalPotentialGain(800, 1000)).toBe(-20))
+describe('calculateTotalPotentialGain', () => {
+  it('returns 0 when buyValue is 0', () => expect(calculateTotalPotentialGain(2000, 0)).toBe(0))
+  it('calculates 100% gain correctly', () => expect(calculateTotalPotentialGain(2000, 1000)).toBe(100))
+  it('calculates a loss correctly', () => expect(calculateTotalPotentialGain(800, 1000)).toBe(-20))
 })
 
 // ---------------------------------------------------------------------------
-// calcRemainingGain
+// calculateRemainingGain
 // ---------------------------------------------------------------------------
-describe('calcRemainingGain', () => {
-  it('returns 0 when currentValue is 0', () => expect(calcRemainingGain(2000, 0)).toBe(0))
-  it('returns 0 when currentValue is falsy', () => expect(calcRemainingGain(2000, null)).toBe(0))
-  it('calculates 25% remaining gain', () => expect(calcRemainingGain(1250, 1000)).toBe(25))
-  it('handles target below current', () => expect(calcRemainingGain(800, 1000)).toBe(-20))
+describe('calculateRemainingGain', () => {
+  it('returns 0 when currentValue is 0', () => expect(calculateRemainingGain(2000, 0)).toBe(0))
+  it('returns 0 when currentValue is falsy', () => expect(calculateRemainingGain(2000, null)).toBe(0))
+  it('calculates 25% remaining gain', () => expect(calculateRemainingGain(1250, 1000)).toBe(25))
+  it('handles target below current', () => expect(calculateRemainingGain(800, 1000)).toBe(-20))
 })
 
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ describe('xirr', () => {
 describe('calcPortfolioSummary', () => {
   it('returns zeros for empty inputs', () => {
     const result = calcPortfolioSummary([], [])
-    expect(result).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPct: 0, cagr: 0 })
+    expect(result).toMatchObject({ netValue: 0, totalInvested: 0, profit: 0, profitPercentage: 0, cagr: 0 })
   })
 
   it('calculates netValue and totalInvested correctly', () => {
@@ -179,13 +179,13 @@ describe('calcPortfolioSummary', () => {
     expect(result.totalInvested).toBe(2000)   // 100*10 + 200*5
     expect(result.netValue).toBe(2400)          // 150*10 + 180*5
     expect(result.profit).toBe(400)
-    expect(result.profitPct).toBeCloseTo(20)
+    expect(result.profitPercentage).toBeCloseTo(20)
   })
 
-  it('returns profitPct 0 when no investment', () => {
+  it('returns profitPercentage 0 when no investment', () => {
     const positions = [{ buyPrice: 0, qty: 10, cmp: 150 }]
     const result = calcPortfolioSummary(positions, [])
-    expect(result.profitPct).toBe(0)
+    expect(result.profitPercentage).toBe(0)
   })
 
   it('computes cagr from cagrEntries', () => {

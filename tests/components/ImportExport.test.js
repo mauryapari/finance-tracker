@@ -11,7 +11,7 @@ const ButtonStub = { props: ['label'], template: '<button v-bind="$attrs">{{ lab
 // Make FileReader synchronous so we don't need flushPromises gymnastics
 let fakeFileContent = ''
 vi.stubGlobal('FileReader', class {
-  readAsText(_file) {
+  readAsText() {
     this.onload?.({ target: { result: fakeFileContent } })
   }
 })
@@ -69,7 +69,6 @@ describe('ImportExport — layout', () => {
 
   it('hides the flash message by default', () => {
     const w = makeWrapper()
-    const span = w.find('span[class*="text-"]')
     // The date span is present; the flash span should not be rendered (v-if="message")
     expect(w.findAll('span').filter(s => s.text().includes('Import') || s.text().includes('success'))).toHaveLength(0)
   })

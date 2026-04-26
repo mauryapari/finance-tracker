@@ -17,7 +17,7 @@
         <TabNav />
       </div>
     </header>
-    <main class="flex-1 overflow-hidden flex flex-col max-w-screen-2xl mx-auto w-full">
+    <main class="flex-1 overflow-hidden flex flex-col max-w-screen-2xl mx-auto w-full pb-4">
       <slot />
     </main>
   </div>

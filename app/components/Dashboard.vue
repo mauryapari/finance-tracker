@@ -5,11 +5,13 @@
         title="Stock Portfolio"
         :summary="stockSummary"
         :cagr="stockCagr"
+        :positions="[...store.tables.openPositions, ...store.tables.etfs]"
       />
       <SummaryCard
         title="Commodity Portfolio"
         :summary="commoditySummary"
         :cagr="commodityCagr"
+        :positions="store.tables.commodityEtfs"
       />
     </div>
   </div>
