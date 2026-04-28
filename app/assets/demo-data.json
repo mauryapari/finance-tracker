@@ -1,0 +1,768 @@
+{
+  "version": 2,
+  "tables": {
+    "openPositions": [
+      {
+        "id": "demo-op-001",
+        "stock": "HDFCBANK",
+        "stockExchange": "NSE",
+        "buyDate": "2026-04-23",
+        "buyPrice": 671,
+        "qty": 5,
+        "strategyName": "",
+        "targetPrice": 900,
+        "description": ""
+      },
+      {
+        "id": "demo-op-002",
+        "description": "Groww",
+        "stock": "UNITDSPR",
+        "buyDate": "2025-07-28",
+        "buyPrice": 1514,
+        "qty": 3,
+        "strategyName": "Stochastic / Knoxville",
+        "targetPrice": 1600,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-003",
+        "description": "",
+        "stock": "MEDANTA",
+        "buyDate": "2026-03-23",
+        "buyPrice": 870,
+        "qty": 4,
+        "strategyName": "V20",
+        "targetPrice": 1150,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-004",
+        "description": "Groww",
+        "stock": "MARKSANS",
+        "buyDate": "2025-08-26",
+        "buyPrice": 210,
+        "qty": 11,
+        "strategyName": "V20",
+        "targetPrice": 240,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-005",
+        "description": "",
+        "stock": "MARKSANS",
+        "buyDate": "2025-08-26",
+        "buyPrice": 199,
+        "qty": 12,
+        "strategyName": "V20",
+        "targetPrice": 240,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-006",
+        "description": "",
+        "stock": "DOMS",
+        "buyDate": "2026-03-11",
+        "buyPrice": 1777,
+        "qty": 3,
+        "strategyName": "V20",
+        "targetPrice": 2600,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-007",
+        "description": "",
+        "stock": "MARKSANS",
+        "buyDate": "2025-08-28",
+        "buyPrice": 203,
+        "qty": 12,
+        "strategyName": "V20",
+        "targetPrice": 250,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-008",
+        "description": "",
+        "stock": "WAAREERTL",
+        "buyDate": "2025-12-03",
+        "buyPrice": 941,
+        "qty": 6,
+        "strategyName": "V20",
+        "targetPrice": 1200,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-009",
+        "description": "",
+        "stock": "CASTROLIND",
+        "buyDate": "2025-12-03",
+        "buyPrice": 220,
+        "qty": 45,
+        "strategyName": "RBS",
+        "targetPrice": 270,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-010",
+        "description": "",
+        "stock": "RELIANCE",
+        "buyDate": "2026-01-06",
+        "buyPrice": 1325,
+        "qty": 8,
+        "strategyName": "CWH",
+        "targetPrice": 1750,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-011",
+        "description": "Groww",
+        "stock": "COLPAL",
+        "buyDate": "2025-07-24",
+        "buyPrice": 2731,
+        "qty": 4,
+        "strategyName": "Knoxville",
+        "targetPrice": 3100,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-012",
+        "description": "Groww",
+        "stock": "HAL",
+        "buyDate": "2024-07-09",
+        "buyPrice": 4709,
+        "qty": 2,
+        "strategyName": "",
+        "targetPrice": 5500,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-013",
+        "description": "Groww",
+        "stock": "HAL",
+        "buyDate": "2024-07-23",
+        "buyPrice": 4236,
+        "qty": 2,
+        "strategyName": "",
+        "targetPrice": 5500,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-014",
+        "description": "",
+        "stock": "HNDFDS",
+        "buyDate": "2025-09-29",
+        "buyPrice": 604,
+        "qty": 7,
+        "strategyName": "Reco",
+        "targetPrice": 800,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-015",
+        "description": "Groww",
+        "stock": "HAVELLS",
+        "buyDate": "2025-07-14",
+        "buyPrice": 1371,
+        "qty": 10,
+        "strategyName": "SMA",
+        "targetPrice": 1800,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-016",
+        "description": "Groww",
+        "stock": "POLYMED",
+        "buyDate": "2025-08-21",
+        "buyPrice": 2360,
+        "qty": 3,
+        "strategyName": "V20",
+        "targetPrice": 2800,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-017",
+        "description": "",
+        "stock": "POLYMED",
+        "buyDate": "2025-09-23",
+        "buyPrice": 1644,
+        "qty": 3,
+        "strategyName": "V20",
+        "targetPrice": 2800,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-018",
+        "stock": "TCS",
+        "stockExchange": "BSE",
+        "buyDate": "2025-07-14",
+        "buyPrice": 3774,
+        "qty": 4,
+        "strategyName": "Knoxville",
+        "targetPrice": 4500,
+        "description": "TCS (BOM)"
+      },
+      {
+        "id": "demo-op-021",
+        "description": "",
+        "stock": "PAISALO",
+        "buyDate": "2025-11-07",
+        "buyPrice": 31.65,
+        "qty": 30,
+        "strategyName": "V20",
+        "targetPrice": 70,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-022",
+        "description": "",
+        "stock": "FIVESTAR",
+        "buyDate": "2025-11-12",
+        "buyPrice": 745,
+        "qty": 14,
+        "strategyName": "V20",
+        "targetPrice": 900,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-023",
+        "description": "",
+        "stock": "QUESS",
+        "buyDate": "2025-09-05",
+        "buyPrice": 227,
+        "qty": 18,
+        "strategyName": "Knoxville",
+        "targetPrice": 320,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-024",
+        "description": "Groww",
+        "stock": "IREDA",
+        "buyDate": "2024-10-22",
+        "buyPrice": 232,
+        "qty": 6,
+        "strategyName": "",
+        "targetPrice": 280,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-025",
+        "description": "",
+        "stock": "KPITTECH",
+        "buyDate": "2025-11-19",
+        "buyPrice": 1060,
+        "qty": 12,
+        "strategyName": "V20",
+        "targetPrice": 1350,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-026",
+        "description": "Groww",
+        "stock": "RVNL",
+        "buyDate": "2024-07-09",
+        "buyPrice": 682,
+        "qty": 4,
+        "strategyName": "",
+        "targetPrice": 550,
+        "stockExchange": "NSE"
+      },
+      {
+        "id": "demo-op-027",
+        "description": "Groww",
+        "stock": "IREDA",
+        "buyDate": "2024-07-12",
+        "buyPrice": 268,
+        "qty": 8,
+        "strategyName": "",
+        "targetPrice": 320,
+        "stockExchange": "NSE"
+      }
+    ],
+    "closedPositions": [
+      {
+        "id": "demo-cp-001",
+        "stock": "PAISALO",
+        "description": "",
+        "buyDate": "2025-11-07",
+        "buyRate": 33.5,
+        "qty": 65,
+        "sellDate": "2026-04-24",
+        "sellPrice": 42.5
+      },
+      {
+        "id": "demo-cp-002",
+        "stock": "PAISALO",
+        "description": "",
+        "buyDate": "2025-10-01",
+        "buyRate": 35,
+        "qty": 90,
+        "sellDate": "2026-04-24",
+        "sellPrice": 43
+      },
+      {
+        "id": "demo-cp-003",
+        "stock": "PAISALO",
+        "description": "",
+        "buyDate": "2025-09-19",
+        "buyRate": 36,
+        "qty": 18,
+        "sellDate": "2026-04-24",
+        "sellPrice": 43.5
+      },
+      {
+        "id": "demo-cp-004",
+        "description": "",
+        "stock": "BEL",
+        "buyDate": "2024-07-09",
+        "buyRate": 320,
+        "qty": 4,
+        "sellDate": "2025-07-15",
+        "sellPrice": 390
+      },
+      {
+        "id": "demo-cp-005",
+        "description": "",
+        "stock": "SBIN",
+        "buyDate": "2025-07-17",
+        "buyRate": 780,
+        "qty": 7,
+        "sellDate": "2025-11-17",
+        "sellPrice": 920
+      },
+      {
+        "id": "demo-cp-006",
+        "description": "",
+        "stock": "ANGELONE",
+        "buyDate": "2025-09-04",
+        "buyRate": 2100,
+        "qty": 4,
+        "sellDate": "2025-11-17",
+        "sellPrice": 2700
+      },
+      {
+        "id": "demo-cp-007",
+        "description": "",
+        "stock": "SBIN",
+        "buyDate": "2024-07-09",
+        "buyRate": 800,
+        "qty": 2,
+        "sellDate": "2026-01-05",
+        "sellPrice": 950
+      },
+      {
+        "id": "demo-cp-008",
+        "description": "",
+        "stock": "ENGINERSIN",
+        "buyDate": "2026-01-08",
+        "buyRate": 185,
+        "qty": 25,
+        "sellDate": "2026-04-20",
+        "sellPrice": 225
+      },
+      {
+        "id": "demo-cp-009",
+        "description": "",
+        "stock": "ENGINERSIN",
+        "buyDate": "2026-01-09",
+        "buyRate": 187,
+        "qty": 22,
+        "sellDate": "2026-04-22",
+        "sellPrice": 235
+      },
+      {
+        "id": "demo-cp-010",
+        "description": "",
+        "stock": "SBIN",
+        "buyDate": "2025-07-17",
+        "buyRate": 775,
+        "qty": 8,
+        "sellDate": "2026-01-05",
+        "sellPrice": 960
+      },
+      {
+        "id": "demo-cp-011",
+        "stock": "TATASTEEL",
+        "buyDate": "2024-08-06",
+        "buyRate": 140,
+        "qty": 12,
+        "sellDate": "2026-02-09",
+        "sellPrice": 195,
+        "description": ""
+      },
+      {
+        "id": "demo-cp-012",
+        "description": "KPL",
+        "stock": "KPL",
+        "buyDate": "2025-10-07",
+        "buyRate": 820,
+        "qty": 3,
+        "sellDate": "2026-02-16",
+        "sellPrice": 1380
+      },
+      {
+        "id": "demo-cp-013",
+        "description": "",
+        "stock": "539997",
+        "buyDate": "2025-10-07",
+        "buyRate": 830,
+        "qty": 2,
+        "sellDate": "2026-02-27",
+        "sellPrice": 1450
+      }
+    ],
+    "etfs": [
+      {
+        "id": "demo-etf-001",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2025-07-07",
+        "buyPrice": 269,
+        "qty": 16,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-002",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2025-09-02",
+        "buyPrice": 262,
+        "qty": 16,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-003",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2025-10-03",
+        "buyPrice": 263,
+        "qty": 16,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-004",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2025-10-20",
+        "buyPrice": 83,
+        "qty": 55,
+        "target": 0
+      },
+      {
+        "id": "demo-etf-005",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2025-11-06",
+        "buyPrice": 81,
+        "qty": 55,
+        "target": 0
+      },
+      {
+        "id": "demo-etf-006",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2025-12-02",
+        "buyPrice": 278,
+        "qty": 15,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-007",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2025-12-04",
+        "buyPrice": 80,
+        "qty": 55,
+        "target": 0
+      },
+      {
+        "id": "demo-etf-008",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2026-01-02",
+        "buyPrice": 279,
+        "qty": 15,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-009",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2026-01-21",
+        "buyPrice": 76,
+        "qty": 10,
+        "target": 0
+      },
+      {
+        "id": "demo-etf-010",
+        "type": "Equity",
+        "stock": "ITBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2026-02-23",
+        "buyPrice": 32.5,
+        "qty": 95,
+        "target": 75
+      },
+      {
+        "id": "demo-etf-011",
+        "type": "Equity",
+        "stock": "ITBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2026-03-05",
+        "buyPrice": 31,
+        "qty": 70,
+        "target": 75
+      },
+      {
+        "id": "demo-etf-012",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2026-03-13",
+        "buyPrice": 82,
+        "qty": 28,
+        "target": 0
+      },
+      {
+        "id": "demo-etf-013",
+        "type": "Equity",
+        "stock": "NIFTYBEES",
+        "stockExchange": "NSE",
+        "buyDate": "2026-03-25",
+        "buyPrice": 249,
+        "qty": 18,
+        "target": 400
+      },
+      {
+        "id": "demo-etf-014",
+        "type": "Equity",
+        "stock": "MODEFENCE",
+        "stockExchange": "NSE",
+        "buyDate": "2026-03-27",
+        "buyPrice": 76,
+        "qty": 55,
+        "target": 0
+      }
+    ],
+    "closedEtfs": [],
+    "commodityEtfs": [
+      {
+        "id": "demo-cetf-001",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2025-09-12",
+        "buyPrice": 88,
+        "qty": 40
+      },
+      {
+        "id": "demo-cetf-002",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2025-10-06",
+        "buyPrice": 95,
+        "qty": 32
+      },
+      {
+        "id": "demo-cetf-003",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2025-11-14",
+        "buyPrice": 101,
+        "qty": 32
+      },
+      {
+        "id": "demo-cetf-004",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2026-02-09",
+        "buyPrice": 123,
+        "qty": 90
+      },
+      {
+        "id": "demo-cetf-005",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2026-03-09",
+        "buyPrice": 126,
+        "qty": 36
+      },
+      {
+        "id": "demo-cetf-006",
+        "type": "Gold",
+        "stock": "SETFGOLD",
+        "stockExchange": "NSE",
+        "buyDate": "2026-04-08",
+        "buyPrice": 121,
+        "qty": 38
+      }
+    ],
+    "closedCommodityEtfs": [
+      {
+        "id": "demo-ccetf-001",
+        "stock": "SILVERBEES",
+        "buyDate": "2025-09-12",
+        "buyRate": 115,
+        "qty": 10,
+        "sellDate": "2026-01-30",
+        "sellPrice": 300
+      },
+      {
+        "id": "demo-ccetf-002",
+        "stock": "SILVERBEES",
+        "buyDate": "2025-10-06",
+        "buyRate": 134,
+        "qty": 9,
+        "sellDate": "2026-01-31",
+        "sellPrice": 300
+      },
+      {
+        "id": "demo-ccetf-003",
+        "stock": "SILVERBEES",
+        "buyDate": "2025-11-14",
+        "buyRate": 146,
+        "qty": 18,
+        "sellDate": "2026-02-01",
+        "sellPrice": 300
+      },
+      {
+        "id": "demo-ccetf-004",
+        "stock": "SILVERBEES",
+        "buyDate": "2025-12-08",
+        "buyRate": 161,
+        "qty": 9,
+        "sellDate": "2026-03-24",
+        "sellPrice": 200
+      }
+    ],
+    "cagrEntries": [],
+    "commodityCagrEntries": [],
+    "budgetYears": [
+      {
+        "id": "demo-by-001",
+        "year": 2025,
+        "totalMonthly": 35000,
+        "equityPercentage": 0.78,
+        "debtPercentage": 0.12,
+        "commodityPercentage": 0.1,
+        "goldPercentage": 0.8,
+        "silverPercentage": 0.2
+      },
+      {
+        "id": "demo-by-002",
+        "year": 2026,
+        "totalMonthly": 40000,
+        "equityPercentage": 0.78,
+        "debtPercentage": 0.12,
+        "commodityPercentage": 0.1,
+        "goldPercentage": 0.8,
+        "silverPercentage": 0.2
+      }
+    ],
+    "budgetMonthly": [
+      {
+        "id": "demo-bm-001",
+        "year": 2025,
+        "month": 1,
+        "mfEquity": 18000,
+        "ppf": 3500
+      },
+      {
+        "id": "demo-bm-002",
+        "year": 2026,
+        "month": 12,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-003",
+        "year": 2026,
+        "month": 11,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-004",
+        "year": 2026,
+        "month": 10,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-005",
+        "year": 2026,
+        "month": 9,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-006",
+        "year": 2026,
+        "month": 8,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-007",
+        "year": 2026,
+        "month": 7,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-008",
+        "year": 2026,
+        "month": 6,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-009",
+        "year": 2026,
+        "month": 5,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-010",
+        "year": 2026,
+        "month": 4,
+        "mfEquity": 19000,
+        "ppf": 4800
+      },
+      {
+        "id": "demo-bm-011",
+        "year": 2026,
+        "month": 3,
+        "mfEquity": 19000,
+        "ppf": 5500
+      },
+      {
+        "id": "demo-bm-012",
+        "year": 2026,
+        "month": 2,
+        "mfEquity": 19000,
+        "ppf": 4500
+      },
+      {
+        "id": "demo-bm-013",
+        "year": 2026,
+        "month": 1,
+        "mfEquity": 15000,
+        "ppf": 4500
+      }
+    ]
+  }
+}
