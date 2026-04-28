@@ -13,6 +13,10 @@ export default defineEventHandler(async (event) => {
       period2: new Date(),
       interval: '1d',
     })
+    console.log(`Fetched ${rows.length} historical rows for ${symbol} from Yahoo Finance`)
+    if (symbol === 'HDFCBANK.NS') {
+      console.log('Sample row:', rows)
+    }
     if (!rows?.length) return { peak: null }
     const peak = Math.max(...rows.map(r => r.high ?? 0))
     return { peak }

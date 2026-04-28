@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev            # start dev server (http://localhost:3000)
+npm run dev            # start dev server (http://localhost:3010)
 npm run build          # production build → dist/ + .netlify/functions-internal/
 npm run preview        # preview the production build locally
 npm run test           # run Vitest tests once
@@ -15,25 +15,60 @@ npm run lint           # ESLint + Stylelint check
 npm run lint:fix       # auto-fix lint issues
 ```
 
+To run a single test file: `npx vitest run tests/components/Table.test.js`
+
 Tests live in `tests/` and use `happy-dom`. Coverage is scoped to `app/composables/` and `app/stores/`.
 
 ## Architecture
 
 **Nuxt 4 SPA** (`ssr: false`) using the `app/` directory layout (`future.compatibilityVersion: 4`). All page/component/composable/store code lives under `app/`. The server routes (`server/api/`) stay at the project root and are compiled by Nitro to Netlify Functions via `nitro.preset = 'netlify'`.
 
+Two layouts: `app/layouts/default.vue` (full app with header/nav) and `app/layouts/auth.vue` (minimal, used only by `login.vue`).
+
 ### Data flow
 
-All data lives in a single Pinia store (`app/stores/data.js`) that mirrors itself to `localStorage` under the key `finance_tracker_data`. The persisted shape is:
+All data lives in a single Pinia store (`app/stores/data.js`). The persisted shape is:
 
 ```js
-{ version: 1, tables: { openPositions, closedPositions, etfs, closedEtfs, commodityEtfs, closedCommodityEtfs, cagrEntries, commodityCagrEntries } }
+{
+  version: 2,
+  tables: {
+    openPositions, closedPositions,
+    etfs, closedEtfs,
+    commodityEtfs, closedCommodityEtfs,
+    cagrEntries, commodityCagrEntries,   // manual entries — not used in the CAGR read path
+    budgetYears,                          // annual budget config objects
+    budgetMonthly,                        // monthly investment tracking rows
+  },
+  storageMode: 'local' | 'remote' | 'demo',
+  isDemoMode: boolean,
+}
 ```
 
 **Stored fields are user-entered only.** Every derived number (% gain, days, annual gain, target value, drop from peak, etc.) is calculated at render time by functions from `app/composables/useCalculations.js` and never written to storage.
 
 Two exceptions to the transient rule:
-- `store.updateCmp()` mutates CMP in memory **without** calling `saveToStorage()` — live prices reset on refresh.
-- `store.updatePeak()` **does** call `saveToStorage()` — peak prices are persisted.
+- `store.updateCmp()` mutates CMP in memory **without** calling `saveToStorage()` — live prices reset on refresh. It also silently upgrades `peakPrice` in memory and **does** persist if the new CMP exceeds the stored peak.
+- `store.updatePeak()` always calls `saveToStorage()` — peak prices fetched at startup are persisted.
+
+### Storage modes
+
+The store operates in one of three modes, resolved at startup in `loadFromStorage()`:
+
+- **`remote`** — Upstash Redis is configured (env vars present). Data syncs to Redis on every save; `Authorization` header tokens guard the `/api/data` endpoints.
+- **`local`** — No Redis configured. Data lives only in `localStorage` under the key `finance_tracker_data`. First-time Redis config triggers a one-shot migration of existing localStorage data to Redis.
+- **`demo`** — `isDemoMode` is set; data is loaded from `app/assets/demo-data.json` and saves are no-ops.
+
+### Authentication
+
+`app/composables/useAuth.js` manages the auth token lifecycle. The flow:
+
+1. `login.vue` POSTs `{ password }` to `POST /api/auth/login`.
+2. The server signs `expiresAt` (now + 24 h) with `AUTH_SECRET` via HMAC-SHA256 and returns `{ token, expiresAt }`.
+3. The composable stores both in `localStorage` and provides `getAuthHeaders()` → `{ Authorization: 'Bearer <token>', 'X-Expires-At': '<expiresAt>' }`.
+4. Every `/api/data` GET/POST call includes these headers; `server/utils/validateAuth.js` recomputes the hash and rejects expired or tampered tokens with 401.
+
+Authentication is **optional for local-only mode** — if `AUTH_PASSWORD` and `AUTH_SECRET` are not set, the login endpoint returns 500 and the app falls back to localStorage storage only.
 
 ### Table config hub
 
@@ -42,7 +77,7 @@ Two exceptions to the transient rule:
 - **`COLUMNS`** — display column defs per `tableKey` (field, header, formatting function, frozen columns)
 - **`FIELD_CONFIGS`** — editable field specs per `tableKey` (type: `text | number | decimal | date | select`)
 - **`BLANK_ROWS`** — template objects for new row creation
-- **`ENRICHMENT`** — per-table row enrichment functions (compute `pctGain`, `annualGainPct`, `days`, `targetHit` at render time)
+- **`ENRICHMENT`** — per-table row enrichment functions (compute `pctGain`, `annualGainPct`, `days`, `targetHit` at render time). The `openPositions` enrichment uniquely receives `totalCurrentValue` as a second argument to compute each row's portfolio weight percentage.
 - **`CLOSE_TARGET_KEY`** — maps open → closed table keys (e.g., `openPositions → closedPositions`)
 - **`CLOSE_FIELD_MAP`** — fields copied during a close operation (e.g., `buyPrice → buyRate`)
 
@@ -50,13 +85,27 @@ When a row is "closed" in `Table.vue`, the close operation reads `CLOSE_TARGET_K
 
 ### Table editing pattern
 
-All tables use a single `Table.vue` component with a `tableKey` prop. Column/field config is looked up from `tableConfigs.js` at runtime. The component supports:
+All stock/ETF tables use a single `Table.vue` component with a `tableKey` prop. Column/field config is looked up from `tableConfigs.js` at runtime. The component supports:
 
 - **Inline row editing** — PrimeVue `DataTable` with `editMode="row"` (pencil/✓/✕ controls)
 - **Delete dialog** — PrimeVue `Dialog` for delete confirmation
 - **Close action** — moves a row from open to closed table using the config maps above
 
 Composables that power the table: `useTableEditing.js` (tracks which rows are in edit mode) and `useTableDelete.js` (delete dialog state).
+
+### Budget feature
+
+The budget page (`app/pages/budget.vue`) is a standalone subsystem with 14 components in `app/components/Budget/`. It does **not** use the generic `Table.vue` component.
+
+The data model has two store tables:
+- **`budgetYears`** — annual configs: total monthly amount, equity %, debt %, commodities %, gold %, silver %, number of months.
+- **`budgetMonthly`** — monthly rows: actual investments per category (stock equity, ETFs, mutual fund equity, PPF, gold, silver) plus sell proceeds and profit booked. Most values are derived from `openPositions`/`closedPositions`/`commodityEtfs` buy dates rather than entered directly.
+
+`app/composables/useBudgetCalculations.js` is the computation layer. It calculates:
+- Monthly planned allocation vs actual invested amounts per category
+- Running broker cash balance (starting balance + sell proceeds − buys each month)
+- Gap analysis (planned − actual per category, signed: positive = surplus, negative = shortfall)
+- Drilldown data for stock purchases, sell proceeds, and commodity buys per month
 
 ### CMP polling
 
@@ -70,20 +119,36 @@ Yahoo Finance symbol convention: NSE stocks get `.NS` appended, BSE stocks get `
 
 ### CAGR entries
 
-`app/composables/useDerivedCagrEntries.js` computes virtual CAGR rows from all buy/sell trades by date (it does not read `cagrEntries` or `commodityCagrEntries` from the store — those are separate manual entries). The `cagr` and `commodity-cagr` pages display only read-only DataTables showing these derived entries.
+`app/composables/useDerivedCagrEntries.js` computes virtual CAGR rows from all buy/sell trades by date. The `cagr` and `commodity-cagr` pages display only read-only DataTables showing these derived entries. The `cagrEntries` and `commodityCagrEntries` tables in the store exist as manual-entry tables but are **not** read by `useDerivedCagrEntries` — derived entries are computed purely from positions data.
 
 ### Server routes
 
-| Route | Purpose | Params | Response |
-|---|---|---|---|
-| `GET /api/stock-price` | Real-time quote | `symbol` | `{ price: number }` |
-| `GET /api/stock-peak` | Historical peak price since buy date | `symbol`, `from` | `{ peak: number \| null }` |
+| Route | Purpose | Auth | Params | Response |
+|---|---|---|---|---|
+| `GET /api/stock-price` | Real-time quote | No | `symbols` (comma-sep) | `{ [symbol]: price }` |
+| `GET /api/stock-peak` | Historical peak price since buy date | No | `symbol`, `from` | `{ peak: number \| null }` |
+| `GET /api/data` | Load persisted data from Redis | Yes | — | `{ configured: bool, data?: {...} }` |
+| `POST /api/data` | Save data to Redis | Yes | JSON body (store state) | `{ ok: true }` |
+| `POST /api/auth/login` | Generate HMAC token | No | `{ password }` | `{ token, expiresAt }` |
 
-Both wrap `yahoo-finance2`. No environment variables are required.
+Stock endpoints wrap `yahoo-finance2` and require no env vars. Data and auth endpoints require Upstash Redis and auth env vars (see below).
 
 ### UI stack
 
-PrimeVue 4 (Aura theme) + Tailwind CSS. PrimeVue components (`DataTable`, `Column`, `Dialog`, `Button`, `InputText`, `InputNumber`, `Select`) are auto-imported by `@primevue/nuxt-module`. Tailwind is auto-configured by `@nuxtjs/tailwindcss` — no separate `tailwind.config.js` needed. Dark mode uses Tailwind's `class` strategy, toggled by `useTheme.js` which persists the preference to `localStorage`.
+PrimeVue 4 (Aura theme) + Tailwind CSS. PrimeVue components are auto-imported by `@primevue/nuxt-module`. Tailwind is auto-configured by `@nuxtjs/tailwindcss` — no separate `tailwind.config.js` needed. Dark mode uses Tailwind's `class` strategy, toggled by `useTheme.js` which persists the preference to `localStorage`.
+
+## Environment variables
+
+Copy `.env.example` to `.env`. All variables are optional for local-only mode:
+
+```
+NUXT_UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+NUXT_UPSTASH_REDIS_REST_TOKEN=your-token-here
+AUTH_PASSWORD=your_secure_password
+AUTH_SECRET=random_hex_string_32_chars_or_more
+```
+
+Without `NUXT_UPSTASH_REDIS_REST_URL`/`TOKEN`, data stays in `localStorage` only. Without `AUTH_PASSWORD`/`AUTH_SECRET`, login returns 500 — the app falls back to localStorage storage automatically.
 
 ## Adding a new table
 
@@ -95,7 +160,7 @@ PrimeVue 4 (Aura theme) + Tailwind CSS. PrimeVue components (`DataTable`, `Colum
 
 ## Deployment
 
-Push to GitHub → import on Netlify. Build command: `npm run build`, publish directory: `dist`. The `netlify.toml` and `nitro.preset = 'netlify'` handle everything else — no environment variables are required.
+Push to GitHub → import on Netlify. Build command: `npm run build`, publish directory: `dist`. The `netlify.toml` and `nitro.preset = 'netlify'` handle everything else. For Redis sync and auth, set the four env vars above in the Netlify UI.
 
 ## Testing
 
@@ -103,7 +168,7 @@ Tests live in `tests/` and use Vitest + `@vue/test-utils` with `happy-dom`.
 
 ### Coverage requirement
 
-**Every component in `app/components/` must have a corresponding test file in `tests/components/`.** Every composable in `app/composables/` and every store in `app/stores/` must have a test in `tests/`. When you add or modify a component, composable, or store, always write or update the matching test file before considering the task done.
+**Every component in `app/components/` must have a corresponding test file in `tests/components/`.** This includes Budget sub-components (`tests/components/Budget/<Name>.test.js`). Every composable in `app/composables/` and every store in `app/stores/` must have a test in `tests/`. When you add or modify a component, composable, or store, always write or update the matching test file before considering the task done.
 
 ### What to test per file type
 
@@ -112,7 +177,6 @@ Tests live in `tests/` and use Vitest + `@vue/test-utils` with `happy-dom`.
 - Props drive the correct output (pass different `tableKey`, title, etc.)
 - User interactions: clicking Add/Edit/Delete/Close buttons triggers the right store mutations or emits
 - Conditional rendering: empty-state, loading, error states
-- Slot content when applicable
 
 **Composables** (`tests/<composable>.test.js`):
 - Return shape matches expected interface
@@ -141,15 +205,7 @@ const pinia = createTestingPinia({ createSpy: vi.fn })
 - Prefer `wrapper.find('[data-testid="..."]')` selectors over CSS class selectors so tests survive style changes.
 - Add `data-testid` attributes to interactive elements (buttons, inputs, dialogs) when writing new components.
 
-### Running tests
-
-```bash
-npm run test             # run once
-npm run test:watch       # watch mode during development
-npm run test:coverage    # ensure coverage stays green
-```
-
-Coverage is scoped to `app/composables/` and `app/stores/`. Components are tested functionally; 100 % line coverage is not required but every component file must have at least one test file.
+Coverage is scoped to `app/composables/` and `app/stores/`. Components are tested functionally; 100% line coverage is not required but every component file must have at least one test file.
 
 ## Accessibility
 

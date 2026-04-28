@@ -21,6 +21,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     upstashRedisRestUrl: '',
     upstashRedisRestToken: '',
+    public: {
+      storageKey: 'finance_tracker_data',
+    },
   },
   // @ts-expect-error nitro is valid at runtime; type defs lag behind
   nitro: { preset: 'netlify' },

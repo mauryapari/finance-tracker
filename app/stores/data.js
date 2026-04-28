@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
+import { getAuthHeaders } from '~/composables/useAuth'
 
-const STORAGE_KEY = 'finance_tracker_data'
+const getStorageKey = () => useRuntimeConfig().public.storageKey
 const CURRENT_VERSION = 2
 
 const initialState = () => ({
@@ -31,6 +32,7 @@ export const useDataStore = defineStore('data', {
   state: () => ({
     ...initialState(),
     storageMode: 'local',
+    isDemoMode: false,
   }),
 
   getters: {
@@ -54,7 +56,7 @@ export const useDataStore = defineStore('data', {
 
   actions: {
     _loadFromLocalStorage() {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(getStorageKey())
       if (!raw) return
       try {
         const parsed = JSON.parse(raw)
@@ -69,7 +71,7 @@ export const useDataStore = defineStore('data', {
     async loadFromStorage() {
       if (typeof window === 'undefined') return
       try {
-        const res = await fetch('/api/data')
+        const res = await fetch('/api/data', { headers: getAuthHeaders() })
         const json = await res.json()
 
         if (!json.configured) {
@@ -87,7 +89,7 @@ export const useDataStore = defineStore('data', {
         }
 
         // Redis is configured but empty — migrate localStorage data if present
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const raw = localStorage.getItem(getStorageKey())
         if (raw) {
           try {
             const parsed = JSON.parse(raw)
@@ -95,7 +97,7 @@ export const useDataStore = defineStore('data', {
               backfillTables(parsed)
               this.$patch({ version: CURRENT_VERSION, tables: parsed.tables })
               await this.saveToStorage()
-              localStorage.removeItem(STORAGE_KEY)
+              localStorage.removeItem(getStorageKey())
             }
           } catch (e) {
             console.error('Failed to migrate localStorage to Redis', e)
@@ -108,14 +110,23 @@ export const useDataStore = defineStore('data', {
       }
     },
 
+    loadDemoData(data) {
+      this.isDemoMode = true
+      this.storageMode = 'demo'
+      const copy = JSON.parse(JSON.stringify(data))
+      backfillTables(copy)
+      this.$patch({ version: CURRENT_VERSION, tables: copy.tables })
+    },
+
     async saveToStorage() {
       if (typeof window === 'undefined') return
+      if (this.isDemoMode) return
       const payload = { version: this.version, tables: this.tables }
       if (this.storageMode === 'remote') {
         try {
           await fetch('/api/data', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload),
           })
         } catch (e) {
@@ -123,7 +134,7 @@ export const useDataStore = defineStore('data', {
         }
         return
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+      localStorage.setItem(getStorageKey(), JSON.stringify(payload))
     },
 
     addRow(tableKey, row) {

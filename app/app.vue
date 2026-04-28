@@ -8,11 +8,19 @@
 import { useDataStore } from '~/stores/data'
 import { useCmpPoller } from '~/composables/useCmpPoller'
 import { useTheme } from '~/composables/useTheme'
+import { useAuth } from '~/composables/useAuth'
+import demoData from '~/assets/demo-data.json'
 
 const store = useDataStore()
 const { init } = useTheme()
+const { isAuthenticated } = useAuth()
+
 onMounted(async () => {
-  await store.loadFromStorage()
+  if (isAuthenticated.value) {
+    await store.loadFromStorage()
+  } else {
+    store.loadDemoData(demoData)
+  }
   init()
 })
 useCmpPoller()

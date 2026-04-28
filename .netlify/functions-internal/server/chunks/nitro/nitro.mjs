@@ -1,10 +1,10 @@
+import nodeCrypto, { createHash } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
 import { EventEmitter } from 'node:events';
 import { Buffer as Buffer$1 } from 'node:buffer';
 import { promises, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import { createHash } from 'node:crypto';
 import BaseStyle from '@primevue/core/base/style';
 import BaseComponentStyle from '@primevue/core/basecomponent/style';
 import { style } from '@primeuix/styles/autocomplete';
@@ -881,6 +881,7 @@ function getRequestHeader(event, name) {
   const value = headers[name.toLowerCase()];
   return value;
 }
+const getHeader = getRequestHeader;
 function getRequestHost(event, opts = {}) {
   if (opts.xForwardedHost) {
     const _header = event.node.req.headers["x-forwarded-host"];
@@ -908,6 +909,7 @@ function getRequestURL(event, opts = {}) {
 }
 
 const RawBodySymbol = Symbol.for("h3RawBody");
+const ParsedBodySymbol = Symbol.for("h3ParsedBody");
 const PayloadMethods$1 = ["PATCH", "POST", "PUT", "DELETE"];
 function readRawBody(event, encoding = "utf8") {
   assertMethod(event, PayloadMethods$1);
@@ -977,6 +979,26 @@ function readRawBody(event, encoding = "utf8") {
   const result = encoding ? promise.then((buff) => buff.toString(encoding)) : promise;
   return result;
 }
+async function readBody(event, options = {}) {
+  const request = event.node.req;
+  if (hasProp(request, ParsedBodySymbol)) {
+    return request[ParsedBodySymbol];
+  }
+  const contentType = request.headers["content-type"] || "";
+  const body = await readRawBody(event);
+  let parsed;
+  if (contentType === "application/json") {
+    parsed = _parseJSON(body, options.strict ?? true);
+  } else if (contentType.startsWith("application/x-www-form-urlencoded")) {
+    parsed = _parseURLEncodedBody(body);
+  } else if (contentType.startsWith("text/")) {
+    parsed = body;
+  } else {
+    parsed = _parseJSON(body, options.strict ?? false);
+  }
+  request[ParsedBodySymbol] = parsed;
+  return parsed;
+}
 function getRequestWebStream(event) {
   if (!PayloadMethods$1.includes(event.method)) {
     return;
@@ -1010,6 +1032,35 @@ function getRequestWebStream(event) {
       });
     }
   });
+}
+function _parseJSON(body = "", strict) {
+  if (!body) {
+    return void 0;
+  }
+  try {
+    return destr(body, { strict });
+  } catch {
+    throw createError$1({
+      statusCode: 400,
+      statusMessage: "Bad Request",
+      message: "Invalid JSON body"
+    });
+  }
+}
+function _parseURLEncodedBody(body) {
+  const form = new URLSearchParams(body);
+  const parsedForm = /* @__PURE__ */ Object.create(null);
+  for (const [key, value] of form.entries()) {
+    if (hasProp(parsedForm, key)) {
+      if (!Array.isArray(parsedForm[key])) {
+        parsedForm[key] = [parsedForm[key]];
+      }
+      parsedForm[key].push(value);
+    } else {
+      parsedForm[key] = value;
+    }
+  }
+  return parsedForm;
 }
 
 function handleCacheHeaders(event, opts) {
@@ -4075,7 +4126,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "32aa4581-e3ff-4442-b51f-26bff72ad986",
+    "buildId": "19430ca2-4f30-46f8-975b-88640449a88d",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -11236,7 +11287,9 @@ const _inlineRuntimeConfig = {
         ""
       ]
     }
-  }
+  },
+  "upstashRedisRestUrl": "",
+  "upstashRedisRestToken": ""
 };
 const envOptions = {
   prefix: "NITRO_",
@@ -11678,6 +11731,18 @@ function publicAssetsURL(...path) {
 	const app = useRuntimeConfig().app;
 	const publicBase = app.cdnURL || app.baseURL;
 	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
+}
+
+function validateAuth(event) {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) return;
+  const auth = getHeader(event, "authorization") || "";
+  const expiresAt = Number(getHeader(event, "x-expires-at") || "0");
+  const token = auth.replace("Bearer ", "");
+  if (!token || !expiresAt || expiresAt < Date.now())
+    throw createError$1({ statusCode: 401, message: "unauthorized" });
+  const expected = nodeCrypto.createHmac("sha256", secret).update(String(expiresAt)).digest("hex");
+  if (token !== expected) throw createError$1({ statusCode: 401, message: "unauthorized" });
 }
 
 var inlineStyles$i = {
@@ -14770,11 +14835,17 @@ const plugins = [
 
 const _SxA8c9 = defineEventHandler(() => {});
 
+const _lazy_HD7J2k = () => import('../routes/api/auth/login.post.mjs');
+const _lazy_UgeUhj = () => import('../routes/api/data.get.mjs');
+const _lazy_gorbyT = () => import('../routes/api/data.post.mjs');
 const _lazy_dxO75a = () => import('../routes/api/stock-peak.get.mjs');
 const _lazy_XY_iR_ = () => import('../routes/api/stock-price.get.mjs');
 const _lazy_xeJvW8 = () => import('../routes/renderer.mjs');
 
 const handlers = [
+  { route: '/api/auth/login', handler: _lazy_HD7J2k, lazy: true, middleware: false, method: "post" },
+  { route: '/api/data', handler: _lazy_UgeUhj, lazy: true, middleware: false, method: "get" },
+  { route: '/api/data', handler: _lazy_gorbyT, lazy: true, middleware: false, method: "post" },
   { route: '/api/stock-peak', handler: _lazy_dxO75a, lazy: true, middleware: false, method: "get" },
   { route: '/api/stock-price', handler: _lazy_XY_iR_, lazy: true, middleware: false, method: "get" },
   { route: '/__nuxt_error', handler: _lazy_xeJvW8, lazy: true, middleware: false, method: undefined },
@@ -14969,5 +15040,5 @@ function getCacheHeaders(url) {
   return {};
 }
 
-export { getResponseStatusText as a, buildAssetsURL as b, createError$1 as c, defineEventHandler as d, getResponseStatus as e, defineRenderHandler as f, getQuery as g, destr as h, getRouteRules as i, joinURL as j, useNitroApp as k, handler as l, publicAssetsURL as p, useRuntimeConfig as u };
+export { getResponseStatusText as a, buildAssetsURL as b, createError$1 as c, defineEventHandler as d, getResponseStatus as e, defineRenderHandler as f, getQuery as g, destr as h, getRouteRules as i, joinURL as j, useNitroApp as k, handler as l, publicAssetsURL as p, readBody as r, useRuntimeConfig as u, validateAuth as v };
 //# sourceMappingURL=nitro.mjs.map

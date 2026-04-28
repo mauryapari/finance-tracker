@@ -13,13 +13,23 @@
               <i class="pi pi-cloud" aria-hidden="true" />
               Cloud synced
             </span>
-            <ImportExport />
+            <ImportExport v-if="isAuthenticated" />
             <Button
               :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
               text rounded size="small"
               :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
               @click="toggle"
             />
+            <Button
+              v-if="isAuthenticated"
+              icon="pi pi-sign-out"
+              text rounded size="small"
+              aria-label="Sign out"
+              @click="logout"
+            />
+            <NuxtLink v-else-if="route.path !== '/login'" to="/login">
+              <Button icon="pi pi-user" label="Sign In" text size="small" />
+            </NuxtLink>
           </div>
         </div>
         <TabNav />
@@ -34,6 +44,9 @@
 <script setup>
 import { useTheme } from '~/composables/useTheme'
 import { useDataStore } from '~/stores/data'
+import { useAuth } from '~/composables/useAuth'
 const { isDark, toggle } = useTheme()
 const store = useDataStore()
+const { isAuthenticated, logout } = useAuth()
+const route = useRoute()
 </script>

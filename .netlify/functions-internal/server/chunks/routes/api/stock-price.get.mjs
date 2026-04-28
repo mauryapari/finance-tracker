@@ -1,12 +1,12 @@
 import { d as defineEventHandler, g as getQuery, c as createError } from '../../nitro/nitro.mjs';
 import YahooFinance from 'yahoo-finance2';
+import 'node:crypto';
 import 'node:http';
 import 'node:https';
 import 'node:events';
 import 'node:buffer';
 import 'node:fs';
 import 'node:path';
-import 'node:crypto';
 import '@primevue/core/base/style';
 import '@primevue/core/basecomponent/style';
 import '@primeuix/styles/autocomplete';
