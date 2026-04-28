@@ -29,40 +29,67 @@
       class="text-sm"
     >
       <Column field="monthLabel" header="Month" frozen class="min-w-24 font-medium" />
+      <Column field="monthlyBudget" header="Monthly Budget" class="min-w-36">
+        <template #body="{ data }">
+          <span v-if="data.monthlyBudget != null">{{ formatCurrency(data.monthlyBudget) }}</span>
+          <span v-else class="text-gray-400 dark:text-gray-500 text-xs italic">month default</span>
+        </template>
+        <template #editor="{ data, field }">
+          <InputNumber
+            v-model="data[field]"
+            :min-fraction-digits="0"
+            placeholder="blank = month default"
+            size="small"
+            class="w-full"
+            aria-label="Monthly budget override"
+          />
+        </template>
+      </Column>
       <Column field="stockEquityEtfs" header="Stock+ETFs" class="min-w-32">
         <template #body="{ data }">
-          <button
+          <Button
             v-tooltip.top="{
               value: stockEtfsTooltip(data.stockEquityEtfsBreakdown),
               escape: false,
               showDelay: 300,
             }"
-            class="underline decoration-dotted decoration-blue-400 text-blue-600 dark:text-blue-400 cursor-pointer bg-transparent border-0 p-0 font-inherit text-left"
+            variant="text"
+            severity="info"
+            :label="formatCurrency(data.stockEquityEtfs)"
+            class="!p-0 underline decoration-dotted !decoration-blue-400"
             @click="$emit('open-drilldown', 'stocks', data)"
-          >
-            {{ formatCurrency(data.stockEquityEtfs) }}
-          </button>
-        </template>
-      </Column>
-      <Column field="mfEquity" header="MF Equity" class="min-w-32">
-        <template #body="{ data }">{{ formatCurrency(data.mfEquity) }}</template>
-        <template #editor="{ data, field }">
-          <InputNumber
-            v-model="data[field]"
-            :min-fraction-digits="2"
-            size="small"
-            class="w-full"
           />
         </template>
       </Column>
-      <Column field="ppf" header="PPF" class="min-w-28">
-        <template #body="{ data }">{{ formatCurrency(data.ppf) }}</template>
+      <Column field="mfEquityOverride" header="MF Equity" class="min-w-32">
+        <template #body="{ data }">
+          <span v-if="data.mfEquityOverride != null">{{ formatCurrency(data.mfEquity) }}</span>
+          <span v-else class="text-gray-400 dark:text-gray-500 text-xs italic">year default</span>
+        </template>
         <template #editor="{ data, field }">
           <InputNumber
             v-model="data[field]"
             :min-fraction-digits="2"
+            placeholder="blank = year default"
             size="small"
             class="w-full"
+            aria-label="MF Equity override"
+          />
+        </template>
+      </Column>
+      <Column field="ppfOverride" header="PPF" class="min-w-28">
+        <template #body="{ data }">
+          <span v-if="data.ppfOverride != null">{{ formatCurrency(data.ppf) }}</span>
+          <span v-else class="text-gray-400 dark:text-gray-500 text-xs italic">year default</span>
+        </template>
+        <template #editor="{ data, field }">
+          <InputNumber
+            v-model="data[field]"
+            :min-fraction-digits="2"
+            placeholder="blank = year default"
+            size="small"
+            class="w-full"
+            aria-label="PPF override"
           />
         </template>
       </Column>
@@ -77,29 +104,29 @@
       </Column>
       <Column field="sellProceeds" header="Sell Proceeds" class="min-w-36">
         <template #body="{ data }">
-          <button
+          <Button
             v-tooltip.top="'Cash received into your broker account from closing positions this month (sell price × qty). Accumulates in the Broker Cash Balance.'"
-            class="underline decoration-dotted decoration-blue-400 text-blue-600 dark:text-blue-400 cursor-pointer bg-transparent border-0 p-0 font-inherit text-left"
+            variant="link"
+            :label="formatCurrency(data.sellProceeds)"
+            class="!p-0 underline decoration-dotted decoration-blue-400"
             @click="$emit('open-drilldown', 'sells', data)"
-          >
-            {{ formatCurrency(data.sellProceeds) }}
-          </button>
+          />
         </template>
       </Column>
       <Column field="brokerBalance" header="Broker Cash Balance" class="min-w-36">
         <template #body="{ data }">
-          <button
+          <Button
             v-tooltip.top="'Running cash balance in your broker account at end of this month. New purchases draw from this first so they don\'t count as fresh salary. Click to see the full month-by-month history.'"
-            class="cursor-pointer bg-transparent border-0 p-0 font-inherit text-left underline decoration-dotted"
-            :class="
+            variant="link"
+            :label="formatCurrency(data.brokerBalance)"
+            :class="[
+              '!p-0 underline decoration-dotted',
               data.brokerBalance > 0
-                ? 'text-amber-600 dark:text-amber-400 decoration-amber-400'
-                : 'decoration-gray-400'
-            "
+                ? '!text-amber-600 dark:!text-amber-400 decoration-amber-400'
+                : '!text-inherit decoration-gray-400'
+            ]"
             @click="$emit('open-drilldown', 'balance', data)"
-          >
-            {{ formatCurrency(data.brokerBalance) }}
-          </button>
+          />
         </template>
       </Column>
       <Column field="investedEquityPercentage" header="Equity %" class="min-w-24">
@@ -113,12 +140,13 @@
       </Column>
       <Column field="total" header="Total" class="min-w-28 font-semibold">
         <template #body="{ data }">
-          <button
-            class="underline decoration-dotted decoration-blue-400 text-blue-600 dark:text-blue-400 cursor-pointer bg-transparent border-0 p-0 font-inherit font-semibold text-left"
+          <Button
+            variant="text"
+            severity="info"
+            :label="formatCurrency(data.total)"
+            class="!p-0 underline decoration-dotted decoration-blue-400 font-semibold"
             @click="$emit('open-drilldown', 'total', data)"
-          >
-            {{ formatCurrency(data.total) }}
-          </button>
+          />
         </template>
       </Column>
       <Column field="stockProfitBooked" header="Profit Booked" class="min-w-32">
@@ -172,6 +200,7 @@
       <ColumnGroup type="footer">
         <Row>
           <Column footer="Total" frozen />
+          <Column footer="" />
           <Column :footer="formatCurrency(trackingTotals.stockEquityEtfs)" />
           <Column :footer="formatCurrency(trackingTotals.mfEquity)" />
           <Column :footer="formatCurrency(trackingTotals.ppf)" />
@@ -202,6 +231,7 @@ const props = defineProps({
   trackingRows: { type: Array, required: true },
   trackingTotals: { type: Object, required: true },
   selectedYear: { type: Number, required: true },
+  budgetYear: { type: Object, required: true },
 })
 
 defineEmits(['open-drilldown'])
@@ -232,16 +262,32 @@ function stockEtfsTooltip(b) {
 function saveTracking(data) {
   const year = props.selectedYear
   const month = data.month
-  const mfEquity = Number(data.mfEquity) || 0
-  const ppf = Number(data.ppf) || 0
+  const mfEquity = data.mfEquityOverride != null ? Number(data.mfEquityOverride) : null
+  const ppf = data.ppfOverride != null ? Number(data.ppfOverride) : null
+  const totalMonthly =
+    data.monthlyBudget != null && data.monthlyBudget > 0
+      ? Number(data.monthlyBudget)
+      : null
+
+  const payload = {}
+  if (mfEquity !== null) payload.mfEquity = mfEquity
+  if (ppf !== null) payload.ppf = ppf
+  if (totalMonthly !== null) payload.totalMonthly = totalMonthly
 
   const existing = store.tables.budgetMonthly.find(
     (r) => r.year === year && r.month === month,
   )
   if (existing) {
-    store.updateRow('budgetMonthly', existing.id, { ...existing, mfEquity, ppf })
-  } else {
-    store.addRow('budgetMonthly', { id: uuidv4(), year, month, mfEquity, ppf })
+    const updated = { ...existing }
+    if (mfEquity !== null) updated.mfEquity = mfEquity
+    else delete updated.mfEquity
+    if (ppf !== null) updated.ppf = ppf
+    else delete updated.ppf
+    if (totalMonthly !== null) updated.totalMonthly = totalMonthly
+    else delete updated.totalMonthly
+    store.updateRow('budgetMonthly', existing.id, updated)
+  } else if (Object.keys(payload).length > 0) {
+    store.addRow('budgetMonthly', { id: uuidv4(), year, month, ...payload })
   }
   editingTrackingRows.value = []
 }

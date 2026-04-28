@@ -4075,7 +4075,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "f34ee896-2f96-4b59-b999-2a5903b031c8",
+    "buildId": "32aa4581-e3ff-4442-b51f-26bff72ad986",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -14770,10 +14770,12 @@ const plugins = [
 
 const _SxA8c9 = defineEventHandler(() => {});
 
+const _lazy_dxO75a = () => import('../routes/api/stock-peak.get.mjs');
 const _lazy_XY_iR_ = () => import('../routes/api/stock-price.get.mjs');
 const _lazy_xeJvW8 = () => import('../routes/renderer.mjs');
 
 const handlers = [
+  { route: '/api/stock-peak', handler: _lazy_dxO75a, lazy: true, middleware: false, method: "get" },
   { route: '/api/stock-price', handler: _lazy_XY_iR_, lazy: true, middleware: false, method: "get" },
   { route: '/__nuxt_error', handler: _lazy_xeJvW8, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },

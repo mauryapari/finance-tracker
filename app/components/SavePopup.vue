@@ -6,12 +6,12 @@
   >
     <template v-if="mode === 'delete'">
       <span class="text-sm text-gray-600">Delete this row?</span>
-      <button class="btn-danger" @click="$emit('confirm')">Delete</button>
-      <button class="btn-ghost" @click="$emit('cancel')">Cancel</button>
+      <Button label="Delete" severity="danger" size="small" @click="$emit('confirm')" />
+      <Button label="Cancel" variant="text" severity="secondary" size="small" @click="$emit('cancel')" />
     </template>
     <template v-else>
-      <button class="btn-primary" @click="$emit('confirm')">Save</button>
-      <button class="btn-ghost" @click="$emit('cancel')">Cancel</button>
+      <Button label="Save" size="small" @click="$emit('confirm')" />
+      <Button label="Cancel" variant="text" severity="secondary" size="small" @click="$emit('cancel')" />
     </template>
   </div>
 </template>
@@ -30,8 +30,3 @@ const vClickOutside = {
 }
 </script>
 
-<style scoped>
-.btn-primary { @apply px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700; }
-.btn-danger  { @apply px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700; }
-.btn-ghost   { @apply px-3 py-1 text-sm text-gray-600 hover:text-gray-900; }
-</style>

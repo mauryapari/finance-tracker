@@ -21,8 +21,11 @@ const trackingRows = [
   {
     month: 1,
     monthLabel: 'Jan 2025',
+    monthlyBudget: 45000,
     stockEquityEtfs: 10000,
     stockEquityEtfsBreakdown: { openPositions: 5000, closedPositions: 3000, etfs: 2000 },
+    mfEquityOverride: 5000,
+    ppfOverride: 2000,
     mfEquity: 5000,
     ppf: 2000,
     commoditiesGold: 1000,
@@ -35,6 +38,27 @@ const trackingRows = [
     commoditiesPercentage: 10,
     total: 17000,
     stockProfitBooked: 500,
+  },
+  {
+    month: 2,
+    monthLabel: 'Feb 2025',
+    monthlyBudget: null,
+    stockEquityEtfs: 8000,
+    stockEquityEtfsBreakdown: { openPositions: 4000, closedPositions: 2000, etfs: 2000 },
+    mfEquityOverride: null,
+    ppfOverride: null,
+    mfEquity: 3000,
+    ppf: 1500,
+    commoditiesGold: 800,
+    commoditiesSilver: 400,
+    commodities: 1200,
+    sellProceeds: 0,
+    brokerBalance: 0,
+    investedEquityPercentage: 78,
+    debtPercentage: 12,
+    commoditiesPercentage: 10,
+    total: 14000,
+    stockProfitBooked: 0,
   },
 ]
 
@@ -55,9 +79,11 @@ describe('MonthlyTable', () => {
     setActivePinia(createPinia())
   })
 
+  const budgetYear = { totalMonthly: 45000, mfEquity: 3000, ppf: 1500, equityPercentage: 0.78, debtPercentage: 0.12, commodityPercentage: 0.10, goldPercentage: 0.80, silverPercentage: 0.20 }
+
   function makeWrapper() {
     return mount(MonthlyTable, {
-      props: { trackingRows, trackingTotals, selectedYear: 2025 },
+      props: { trackingRows, trackingTotals, selectedYear: 2025, budgetYear },
       global: {
         stubs: {
           Button: ButtonStub,

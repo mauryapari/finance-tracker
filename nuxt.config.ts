@@ -26,5 +26,6 @@ export default defineNuxtConfig({
       title: 'Finance Tracker',
     },
   },
-  devtools: { enabled: true }
+  devtools: { enabled: true },
+  devServer: { port: 3010 }
 })

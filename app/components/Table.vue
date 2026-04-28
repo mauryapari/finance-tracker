@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full px-4">
+  <div class="flex flex-col flex-1 min-h-0 px-4 overflow-y-auto">
     <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
       <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-base">{{ title }}</h3>
       <div class="flex items-center gap-2">

@@ -63,13 +63,14 @@
       </div>
     </div>
 
-    <button
+    <Button
       v-if="positions.length"
-      class="text-xs text-blue-500 dark:text-blue-400 hover:underline mt-1 flex items-center gap-1"
+      :label="showBreakdown ? '▲ Hide breakdown' : '▼ Show breakdown'"
+      variant="link"
+      size="small"
+      class="mt-1 !p-0 text-xs"
       @click="showBreakdown = !showBreakdown"
-    >
-      {{ showBreakdown ? "▲ Hide breakdown" : "▼ Show breakdown" }}
-    </button>
+    />
 
     <div v-if="showBreakdown" class="mt-2 overflow-x-auto">
       <table class="w-full text-xs text-left">

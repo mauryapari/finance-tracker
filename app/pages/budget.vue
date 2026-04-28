@@ -33,6 +33,7 @@
       :tracking-rows="trackingRows"
       :tracking-totals="trackingTotals"
       :selected-year="selectedYear"
+      :budget-year="budgetYear"
       @open-drilldown="openDrilldown"
     />
 
@@ -112,8 +113,11 @@ const trackingRows = computed(() => {
     const stored = store.tables.budgetMonthly.find(
       (r) => r.year === selectedYear.value && r.month === month,
     )
-    const mfEquity = stored?.mfEquity ?? 0
-    const ppf = stored?.ppf ?? 0
+    const mfEquityOverride = stored?.mfEquity ?? null
+    const ppfOverride = stored?.ppf ?? null
+    const mfEquity = mfEquityOverride ?? budgetYear.value?.mfEquity ?? 0
+    const ppf = ppfOverride ?? budgetYear.value?.ppf ?? 0
+    const monthlyBudget = stored?.totalMonthly ?? null
     const stockEquityEtfsBreakdown = calcStockEquityEtfsBreakdown(store, selectedYear.value, month)
     const stockEquityEtfs =
       stockEquityEtfsBreakdown.openPositions +
@@ -131,6 +135,9 @@ const trackingRows = computed(() => {
       _storedId: stored?.id ?? null,
       month,
       monthLabel: `${selectedYear.value}-${String(month).padStart(2, '0')}`,
+      monthlyBudget,
+      mfEquityOverride,
+      ppfOverride,
       mfEquity,
       ppf,
       stockEquityEtfs,
@@ -181,11 +188,12 @@ const trackingTotals = computed(() => {
 // ── Gap analysis rows ──────────────────────────────────────────────────────
 const gapRows = computed(() => {
   if (!budgetYear.value) return []
-  const { totalMonthly, equityPercentage, debtPercentage, commodityPercentage } = budgetYear.value
-  const budgetEquity = totalMonthly * equityPercentage
-  const budgetDebt = totalMonthly * debtPercentage
-  const budgetCommodities = totalMonthly * commodityPercentage
+  const { equityPercentage, debtPercentage, commodityPercentage } = budgetYear.value
   return trackingRows.value.map((r) => {
+    const totalMonthly = r.monthlyBudget ?? budgetYear.value.totalMonthly
+    const budgetEquity = totalMonthly * equityPercentage
+    const budgetDebt = totalMonthly * debtPercentage
+    const budgetCommodities = totalMonthly * commodityPercentage
     const freshEquity = r.freshStockEquityEtfs + r.mfEquity
     const freshCommodities = r.freshCommodities
     return {

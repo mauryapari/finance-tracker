@@ -13,7 +13,7 @@
           v-model="form.year"
           :disabled="mode === 'edit'"
           :use-grouping="false"
-          class="w-full"
+          fluid
         />
       </div>
       <div class="flex flex-col gap-1">
@@ -21,11 +21,29 @@
         <InputNumber
           v-model="form.totalMonthly"
           :min-fraction-digits="2"
-          class="w-full"
+          fluid
         />
       </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1 min-w-0">
+          <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">MF Equity Default (₹)</label>
+          <InputNumber
+            v-model="form.mfEquity"
+            :min-fraction-digits="2"
+            fluid
+          />
+        </div>
+        <div class="flex flex-col gap-1 min-w-0">
+          <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">PPF Default (₹)</label>
+          <InputNumber
+            v-model="form.ppf"
+            :min-fraction-digits="2"
+            fluid
+          />
+        </div>
+      </div>
       <div class="grid grid-cols-3 gap-3">
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 min-w-0">
           <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Equity %</label>
           <InputNumber
             v-model="form.equityInput"
@@ -33,10 +51,10 @@
             :min="0"
             :max="100"
             suffix="%"
-            class="w-full"
+            fluid
           />
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 min-w-0">
           <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Debt %</label>
           <InputNumber
             v-model="form.debtInput"
@@ -44,10 +62,10 @@
             :min="0"
             :max="100"
             suffix="%"
-            class="w-full"
+            fluid
           />
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 min-w-0">
           <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Commodity %</label>
           <InputNumber
             v-model="form.commodityInput"
@@ -55,12 +73,12 @@
             :min="0"
             :max="100"
             suffix="%"
-            class="w-full"
+            fluid
           />
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 min-w-0">
           <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Gold % (of commodity)</label>
           <InputNumber
             v-model="form.goldInput"
@@ -68,10 +86,10 @@
             :min="0"
             :max="100"
             suffix="%"
-            class="w-full"
+            fluid
           />
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 min-w-0">
           <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Silver % (of commodity)</label>
           <InputNumber
             v-model="form.silverInput"
@@ -79,7 +97,7 @@
             :min="0"
             :max="100"
             suffix="%"
-            class="w-full"
+            fluid
           />
         </div>
       </div>
@@ -112,6 +130,8 @@ const store = useDataStore()
 const DEFAULTS = {
   year: new Date().getFullYear(),
   totalMonthly: 45000,
+  mfEquity: 0,
+  ppf: 0,
   equityInput: 78,
   debtInput: 12,
   commodityInput: 10,
@@ -129,6 +149,8 @@ watch(
       form.value = {
         year: by.year,
         totalMonthly: by.totalMonthly,
+        mfEquity: by.mfEquity ?? 0,
+        ppf: by.ppf ?? 0,
         equityInput: by.equityPercentage * 100,
         debtInput: by.debtPercentage * 100,
         commodityInput: by.commodityPercentage * 100,
@@ -146,6 +168,8 @@ function save() {
   const row = {
     year: form.value.year,
     totalMonthly: form.value.totalMonthly,
+    mfEquity: form.value.mfEquity ?? 0,
+    ppf: form.value.ppf ?? 0,
     equityPercentage: (form.value.equityInput || 0) / 100,
     debtPercentage: (form.value.debtInput || 0) / 100,
     commodityPercentage: (form.value.commodityInput || 0) / 100,

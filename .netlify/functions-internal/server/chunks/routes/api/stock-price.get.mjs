@@ -1,5 +1,5 @@
 import { d as defineEventHandler, g as getQuery, c as createError } from '../../nitro/nitro.mjs';
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -105,15 +105,20 @@ import '@primeuix/styles/tooltip';
 import '@primeuix/styles/ripple';
 import '@primeuix/styled';
 
+const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 const stockPrice_get = defineEventHandler(async (event) => {
   const { symbol } = getQuery(event);
   if (!symbol) {
     throw createError({ statusCode: 400, message: "symbol is required" });
   }
   try {
-    const quote = await yahooFinance.quote(symbol);
+    const quote = await yf.quote(symbol);
+    if (!quote || quote.regularMarketPrice == null) {
+      throw createError({ statusCode: 404, message: `No price found for symbol: ${symbol}` });
+    }
     return { price: quote.regularMarketPrice };
   } catch (e) {
+    if (e.statusCode) throw e;
     throw createError({ statusCode: 502, message: `Yahoo Finance error: ${e.message}` });
   }
 });

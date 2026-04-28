@@ -12,7 +12,7 @@
         @click="$emit('edit')"
       />
     </div>
-    <div class="grid grid-cols-3 sm:grid-cols-6 gap-4 text-sm">
+    <div class="grid grid-cols-3 gap-4 text-sm mb-4">
       <div>
         <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
           Monthly Total
@@ -21,6 +21,24 @@
           {{ formatCurrency(budgetYear.totalMonthly) }}
         </p>
       </div>
+      <div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+          MF Equity Default
+        </p>
+        <p class="font-bold text-gray-800 dark:text-gray-100">
+          {{ formatCurrency(budgetYear.mfEquity ?? 0) }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+          PPF Default
+        </p>
+        <p class="font-bold text-gray-800 dark:text-gray-100">
+          {{ formatCurrency(budgetYear.ppf ?? 0) }}
+        </p>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-4 text-sm">
       <div>
         <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
           Equity

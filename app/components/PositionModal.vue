@@ -3,7 +3,7 @@
     <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between p-4 border-b">
         <h3 class="font-semibold text-gray-800">{{ isEdit ? 'Edit' : 'Add' }} {{ typeLabel }}</h3>
-        <button class="text-gray-400 hover:text-gray-600 text-xl leading-none" @click="$emit('close')">×</button>
+        <Button icon="pi pi-times" aria-label="Close" variant="text" severity="secondary" rounded size="small" @click="$emit('close')" />
       </div>
       <div class="overflow-y-auto p-4 space-y-3">
         <div v-for="field in fields" :key="field.key" class="flex flex-col gap-1">
@@ -22,10 +22,8 @@ v-else v-model="form[field.key]"
         </div>
       </div>
       <div class="p-4 border-t flex justify-end gap-2">
-        <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="$emit('close')">Cancel</button>
-        <button class="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700" @click="handleSave">
-          {{ isEdit ? 'Update' : 'Add' }}
-        </button>
+        <Button label="Cancel" variant="text" severity="secondary" @click="$emit('close')" />
+        <Button :label="isEdit ? 'Update' : 'Add'" @click="handleSave" />
       </div>
     </div>
   </div>

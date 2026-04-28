@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '../../../app/stores/data.js'
 import StocksDrilldown from '../../../app/components/Budget/StocksDrilldown.vue'
+import BudgetStockPurchasesTable from '../../../app/components/Budget/StockPurchasesTable.vue'
 
 const DialogStub = {
   props: ['visible', 'header', 'modal', 'contentStyle'],
@@ -21,7 +22,7 @@ describe('StocksDrilldown', () => {
   function makeWrapper(visible = true) {
     return mount(StocksDrilldown, {
       props: { visible, year: 2025, month: 3, monthLabel: 'Mar 2025' },
-      global: { stubs: { Dialog: DialogStub } },
+      global: { stubs: { Dialog: DialogStub }, components: { BudgetStockPurchasesTable } },
     })
   }
 
