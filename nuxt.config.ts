@@ -18,6 +18,10 @@ export default defineNuxtConfig({
       include: ['uuid'],
     }
   },
+  runtimeConfig: {
+    upstashRedisRestUrl: '',
+    upstashRedisRestToken: '',
+  },
   // @ts-expect-error nitro is valid at runtime; type defs lag behind
   nitro: { preset: 'netlify' },
   app: {

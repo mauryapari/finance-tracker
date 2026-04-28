@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDataStore } from '../app/stores/data.js'
 
@@ -13,11 +13,21 @@ function makeLocalStorage() {
   }
 }
 
+function mockFetch(response) {
+  return vi.fn().mockResolvedValue({ json: () => Promise.resolve(response) })
+}
+
 beforeEach(() => {
   setActivePinia(createPinia())
   const ls = makeLocalStorage()
   Object.defineProperty(globalThis, 'localStorage', { value: ls, writable: true, configurable: true })
   Object.defineProperty(globalThis, 'window', { value: globalThis, writable: true, configurable: true })
+  // Default: Redis not configured — all existing tests use localStorage path
+  vi.stubGlobal('fetch', mockFetch({ configured: false }))
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 // ---------------------------------------------------------------------------
@@ -34,6 +44,10 @@ describe('initial state', () => {
 
   it('has version 2', () => {
     expect(useDataStore().version).toBe(2)
+  })
+
+  it('defaults storageMode to local', () => {
+    expect(useDataStore().storageMode).toBe('local')
   })
 })
 
@@ -132,44 +146,160 @@ describe('updateCmp', () => {
 })
 
 // ---------------------------------------------------------------------------
-// loadFromStorage
+// loadFromStorage — local mode (Redis not configured)
 // ---------------------------------------------------------------------------
-describe('loadFromStorage', () => {
-  it('restores previously saved data', () => {
+describe('loadFromStorage — local mode', () => {
+  it('restores previously saved data', async () => {
     const store = useDataStore()
     store.addRow('openPositions', { id: 'r1', stock: 'TCS', qty: 5 })
 
-    // New store instance that reads from the mocked localStorage
     setActivePinia(createPinia())
     const store2 = useDataStore()
-    store2.loadFromStorage()
+    await store2.loadFromStorage()
     expect(store2.tables.openPositions).toHaveLength(1)
     expect(store2.tables.openPositions[0].stock).toBe('TCS')
   })
 
-  it('backfills missing table keys from old data', () => {
-    // Simulate old localStorage data that is missing some keys
+  it('sets storageMode to local', async () => {
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.storageMode).toBe('local')
+  })
+
+  it('backfills missing table keys from old data', async () => {
     localStorage.setItem('finance_tracker_data', JSON.stringify({
       version: 1,
       tables: { openPositions: [{ id: 'x', stock: 'OLD' }] }
     }))
     const store = useDataStore()
-    store.loadFromStorage()
+    await store.loadFromStorage()
     expect(store.tables.closedPositions).toEqual([])
     expect(store.tables.cagrEntries).toEqual([])
   })
 
-  it('is a no-op when localStorage is empty', () => {
-    localStorage.getItem.mockReturnValueOnce(null)
+  it('is a no-op when localStorage is empty', async () => {
+    localStorage.getItem.mockReturnValue(null)
     const store = useDataStore()
-    store.loadFromStorage()
+    await store.loadFromStorage()
     expect(store.tables.openPositions).toEqual([])
   })
 
-  it('handles corrupt JSON without throwing', () => {
+  it('handles corrupt JSON without throwing', async () => {
     localStorage.setItem('finance_tracker_data', 'not-valid-json')
     const store = useDataStore()
-    expect(() => store.loadFromStorage()).not.toThrow()
+    await expect(store.loadFromStorage()).resolves.not.toThrow()
+  })
+
+  it('falls back to localStorage when /api/data fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network error')))
+    localStorage.setItem('finance_tracker_data', JSON.stringify({
+      version: 2,
+      tables: { openPositions: [{ id: 'r1', stock: 'TCS' }], closedPositions: [],
+        etfs: [], closedEtfs: [], commodityEtfs: [], closedCommodityEtfs: [],
+        cagrEntries: [], commodityCagrEntries: [], budgetYears: [], budgetMonthly: [] }
+    }))
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.storageMode).toBe('local')
+    expect(store.tables.openPositions[0].stock).toBe('TCS')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// loadFromStorage — remote mode (Redis configured)
+// ---------------------------------------------------------------------------
+describe('loadFromStorage — remote mode', () => {
+  it('loads data from Redis when configured', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      configured: true,
+      data: {
+        version: 2,
+        tables: {
+          openPositions: [{ id: 'r1', stock: 'INFY' }],
+          closedPositions: [], etfs: [], closedEtfs: [],
+          commodityEtfs: [], closedCommodityEtfs: [],
+          cagrEntries: [], commodityCagrEntries: [],
+          budgetYears: [], budgetMonthly: [],
+        }
+      }
+    }))
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.storageMode).toBe('remote')
+    expect(store.tables.openPositions[0].stock).toBe('INFY')
+  })
+
+  it('backfills missing table keys from Redis data', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      configured: true,
+      data: { version: 2, tables: { openPositions: [{ id: 'r1', stock: 'TCS' }] } }
+    }))
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.tables.closedPositions).toEqual([])
+  })
+
+  it('migrates localStorage to Redis when Redis is empty', async () => {
+    const postMock = vi.fn().mockResolvedValue({ json: () => Promise.resolve({ ok: true }) })
+    let callCount = 0
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url, opts) => {
+      if (!opts || opts.method !== 'POST') {
+        // First GET call returns empty Redis
+        if (callCount === 0) {
+          callCount++
+          return Promise.resolve({ json: () => Promise.resolve({ configured: true, data: null }) })
+        }
+      }
+      // POST call (migration save)
+      return postMock(url, opts)
+    }))
+    localStorage.setItem('finance_tracker_data', JSON.stringify({
+      version: 2,
+      tables: {
+        openPositions: [{ id: 'r1', stock: 'TCS' }],
+        closedPositions: [], etfs: [], closedEtfs: [],
+        commodityEtfs: [], closedCommodityEtfs: [],
+        cagrEntries: [], commodityCagrEntries: [],
+        budgetYears: [], budgetMonthly: [],
+      }
+    }))
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.storageMode).toBe('remote')
+    expect(store.tables.openPositions[0].stock).toBe('TCS')
+    expect(postMock).toHaveBeenCalled()
+    expect(localStorage.removeItem).toHaveBeenCalledWith('finance_tracker_data')
+  })
+
+  it('starts with empty store when Redis is empty and localStorage has no data', async () => {
+    vi.stubGlobal('fetch', mockFetch({ configured: true, data: null }))
+    const store = useDataStore()
+    await store.loadFromStorage()
+    expect(store.storageMode).toBe('remote')
+    expect(store.tables.openPositions).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// saveToStorage — remote mode
+// ---------------------------------------------------------------------------
+describe('saveToStorage — remote mode', () => {
+  it('calls POST /api/data instead of localStorage when storageMode is remote', async () => {
+    const postMock = vi.fn().mockResolvedValue({ json: () => Promise.resolve({ ok: true }) })
+    vi.stubGlobal('fetch', postMock)
+    const store = useDataStore()
+    store.storageMode = 'remote'
+    localStorage.setItem.mockClear()
+    await store.saveToStorage()
+    expect(postMock).toHaveBeenCalledWith('/api/data', expect.objectContaining({ method: 'POST' }))
+    expect(localStorage.setItem).not.toHaveBeenCalled()
+  })
+
+  it('still uses localStorage when storageMode is local', () => {
+    const store = useDataStore()
+    store.storageMode = 'local'
+    store.saveToStorage()
+    expect(localStorage.setItem).toHaveBeenCalledWith('finance_tracker_data', expect.any(String))
   })
 })
 

@@ -20,8 +20,18 @@ const initialState = () => ({
   }
 })
 
+function backfillTables(parsed) {
+  const base = initialState()
+  for (const key of Object.keys(base.tables)) {
+    if (!parsed.tables[key]) parsed.tables[key] = []
+  }
+}
+
 export const useDataStore = defineStore('data', {
-  state: () => initialState(),
+  state: () => ({
+    ...initialState(),
+    storageMode: 'local',
+  }),
 
   getters: {
     stockSummary: (state) => {
@@ -43,27 +53,77 @@ export const useDataStore = defineStore('data', {
   },
 
   actions: {
-    loadFromStorage() {
-      if (typeof window === 'undefined') return
+    _loadFromLocalStorage() {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return
       try {
         const parsed = JSON.parse(raw)
         if (!parsed.tables) return
-        // backfill any missing table keys (handles all version migrations)
-        const base = initialState()
-        for (const key of Object.keys(base.tables)) {
-          if (!parsed.tables[key]) parsed.tables[key] = []
-        }
+        backfillTables(parsed)
         this.$patch({ version: CURRENT_VERSION, tables: parsed.tables })
       } catch (e) {
         console.error('Failed to load from localStorage', e)
       }
     },
 
-    saveToStorage() {
+    async loadFromStorage() {
       if (typeof window === 'undefined') return
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: this.version, tables: this.tables }))
+      try {
+        const res = await fetch('/api/data')
+        const json = await res.json()
+
+        if (!json.configured) {
+          this._loadFromLocalStorage()
+          this.storageMode = 'local'
+          return
+        }
+
+        this.storageMode = 'remote'
+
+        if (json.data) {
+          backfillTables(json.data)
+          this.$patch({ version: CURRENT_VERSION, tables: json.data.tables })
+          return
+        }
+
+        // Redis is configured but empty — migrate localStorage data if present
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw)
+            if (parsed.tables) {
+              backfillTables(parsed)
+              this.$patch({ version: CURRENT_VERSION, tables: parsed.tables })
+              await this.saveToStorage()
+              localStorage.removeItem(STORAGE_KEY)
+            }
+          } catch (e) {
+            console.error('Failed to migrate localStorage to Redis', e)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to reach /api/data, falling back to localStorage', e)
+        this._loadFromLocalStorage()
+        this.storageMode = 'local'
+      }
+    },
+
+    async saveToStorage() {
+      if (typeof window === 'undefined') return
+      const payload = { version: this.version, tables: this.tables }
+      if (this.storageMode === 'remote') {
+        try {
+          await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        } catch (e) {
+          console.error('Failed to save to Redis', e)
+        }
+        return
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
     },
 
     addRow(tableKey, row) {

@@ -5,6 +5,14 @@
         <div class="flex items-center justify-between px-4 py-3">
           <h1 class="text-lg font-bold text-gray-800 dark:text-gray-100">Finance Tracker</h1>
           <div class="flex items-center gap-2">
+            <span
+              v-if="store.storageMode === 'remote'"
+              class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium"
+              aria-label="Data synced to cloud"
+            >
+              <i class="pi pi-cloud" aria-hidden="true" />
+              Cloud synced
+            </span>
             <ImportExport />
             <Button
               :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
@@ -25,5 +33,7 @@
 
 <script setup>
 import { useTheme } from '~/composables/useTheme'
+import { useDataStore } from '~/stores/data'
 const { isDark, toggle } = useTheme()
+const store = useDataStore()
 </script>

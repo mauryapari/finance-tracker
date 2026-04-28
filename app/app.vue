@@ -11,8 +11,8 @@ import { useTheme } from '~/composables/useTheme'
 
 const store = useDataStore()
 const { init } = useTheme()
-onMounted(() => {
-  store.loadFromStorage()
+onMounted(async () => {
+  await store.loadFromStorage()
   init()
 })
 useCmpPoller()
