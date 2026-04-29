@@ -22,6 +22,9 @@
       size="large"
       class="text-sm"
     >
+      <Column header="Sr.no">
+        <template #body="{ index }">{{ index + 1 }}</template>
+      </Column>
       <Column sortable field="date" header="Date" style="min-width: 8rem" />
       <Column sortable field="amount" header="Amount" style="min-width: 10rem">
         <template #body="{ data }">

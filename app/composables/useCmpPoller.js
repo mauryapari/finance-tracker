@@ -9,22 +9,42 @@ export function useCmpPoller() {
 
   const POLL_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
+  function isMarketOpen() {
+    const now = new Date()
+    const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+    const day = ist.getDay()
+    if (day === 0 || day === 6) return false
+    const minutes = ist.getHours() * 60 + ist.getMinutes()
+    return minutes >= 9 * 60 + 15 && minutes < 15 * 60 + 30
+  }
+
   function buildSymbol(position) {
     if (!position.stock) return null
     const suffix = position.stockExchange === 'BSE' ? '.BO' : '.NS'
     return position.stock.includes('.') ? position.stock : position.stock + suffix
   }
 
-  async function fetchPeak(position) {
-    if (!position.stock || !position.buyDate) return
-    const symbol = buildSymbol(position)
+  async function fetchAllPeaks() {
+    const eligible = store.tables.openPositions
+      .filter(p => p.stock && p.buyDate)
+      .map(p => ({ position: p, symbol: buildSymbol(p) }))
+      .filter(e => e.symbol)
+
+    if (eligible.length === 0) return
+
+    const symbols = eligible.map(e => e.symbol).join(',')
+    const froms = eligible.map(e => e.position.buyDate).join(',')
+
     try {
-      const data = await $fetch(`/api/stock-peak?symbol=${encodeURIComponent(symbol)}&from=${position.buyDate}`)
-      if (data.peak != null) {
-        store.updatePeak('openPositions', position.id, data.peak)
+      const peakMap = await $fetch(
+        `/api/stock-peak-batch?symbols=${encodeURIComponent(symbols)}&froms=${encodeURIComponent(froms)}`
+      )
+      for (const { position, symbol } of eligible) {
+        const peak = peakMap[symbol]
+        if (peak != null) store.updatePeak('openPositions', position.id, peak)
       }
     } catch (e) {
-      console.warn(`Failed to fetch peak for ${symbol}:`, e)
+      console.warn('Failed to fetch batch peaks:', e)
     }
   }
 
@@ -64,9 +84,9 @@ export function useCmpPoller() {
   }
 
   function startPolling() {
-    pollAll()
+    if (isMarketOpen()) pollAll()
     intervalId = setInterval(() => {
-      if (document.visibilityState !== 'hidden') pollAll()
+      if (document.visibilityState !== 'hidden' && isMarketOpen()) pollAll()
     }, POLL_INTERVAL)
   }
 
@@ -75,10 +95,12 @@ export function useCmpPoller() {
       await Notification.requestPermission()
     }
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') pollAll()
+      if (document.visibilityState === 'visible' && isMarketOpen()) pollAll()
     })
     startPolling()
-    Promise.allSettled(store.tables.openPositions.map(p => fetchPeak(p)))
+    if (isMarketOpen()) {
+      fetchAllPeaks()
+    }
   })
 
   onUnmounted(() => {

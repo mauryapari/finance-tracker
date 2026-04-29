@@ -63,15 +63,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, defineAsyncComponent } from 'vue'
 import { useDataStore } from '~/stores/data'
-import BudgetStocksDrilldown from '~/components/Budget/StocksDrilldown.vue'
-import BudgetSellsDrilldown from '~/components/Budget/SellsDrilldown.vue'
-import BudgetTotalDrilldown from '~/components/Budget/TotalDrilldown.vue'
-import BudgetBalanceHistory from '~/components/Budget/BalanceHistory.vue'
-import BudgetGapEquityDialogs from '~/components/Budget/GapEquityDialogs.vue'
-import BudgetGapDebtDialog from '~/components/Budget/GapDebtDialog.vue'
-import BudgetGapCommoditiesDialogs from '~/components/Budget/GapCommoditiesDialogs.vue'
 import {
   calcStockEquityEtfsBreakdown,
   calcCommodityGold,
@@ -79,6 +72,14 @@ import {
   calcStockProfitBooked,
   calcBrokerRunningBalance,
 } from '~/composables/useBudgetCalculations'
+const BudgetStocksDrilldown       = defineAsyncComponent(() => import('~/components/Budget/StocksDrilldown.vue'))
+const BudgetSellsDrilldown        = defineAsyncComponent(() => import('~/components/Budget/SellsDrilldown.vue'))
+const BudgetTotalDrilldown        = defineAsyncComponent(() => import('~/components/Budget/TotalDrilldown.vue'))
+const BudgetBalanceHistory        = defineAsyncComponent(() => import('~/components/Budget/BalanceHistory.vue'))
+const BudgetGapEquityDialogs      = defineAsyncComponent(() => import('~/components/Budget/GapEquityDialogs.vue'))
+const BudgetGapDebtDialog         = defineAsyncComponent(() => import('~/components/Budget/GapDebtDialog.vue'))
+const BudgetGapCommoditiesDialogs = defineAsyncComponent(() => import('~/components/Budget/GapCommoditiesDialogs.vue'))
+
 
 const store = useDataStore()
 

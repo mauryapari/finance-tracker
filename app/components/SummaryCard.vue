@@ -78,7 +78,14 @@
           <tr
             class="text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700"
           >
-            <th class="pb-1 pr-3 font-medium">Stock</th>
+            <th
+              class="pb-1 pr-3 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200"
+              @click="cycleNameSort"
+            >
+              Stock
+              <span v-if="nameSort === 'asc'">▲</span>
+              <span v-else-if="nameSort === 'desc'">▼</span>
+            </th>
             <th class="pb-1 pr-3 font-medium text-right">Invested</th>
             <th class="pb-1 pr-3 font-medium text-right">Net Value</th>
             <th class="pb-1 font-medium text-right">Gain</th>
@@ -86,8 +93,8 @@
         </thead>
         <tbody>
           <tr
-            v-for="row in breakdownRows"
-            :key="row.stock + (row.type ?? '')"
+            v-for="(row, i) in breakdownRows"
+            :key="i"
             class="border-b border-gray-50 dark:border-gray-700/50 last:border-0"
           >
             <td class="py-1 pr-3 text-gray-700 dark:text-gray-300">
@@ -152,6 +159,11 @@ const props = defineProps({
 });
 
 const showBreakdown = ref(false);
+const nameSort = ref(null); // null | 'asc' | 'desc'
+
+function cycleNameSort() {
+  nameSort.value = nameSort.value === null ? 'asc' : nameSort.value === 'asc' ? 'desc' : null
+}
 
 const skippedCount = computed(
   () => props.positions.filter((p) => !p.cmp).length,
@@ -173,7 +185,11 @@ const breakdownRows = computed(() =>
         gainPercentage,
       };
     })
-    .sort((a, b) => b.invested - a.invested),
+    .sort((a, b) => {
+      if (nameSort.value === 'asc') return a.stock.localeCompare(b.stock)
+      if (nameSort.value === 'desc') return b.stock.localeCompare(a.stock)
+      return b.invested - a.invested
+    }),
 );
 
 function formatCurrency(n) {

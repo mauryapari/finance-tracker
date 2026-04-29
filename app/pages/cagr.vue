@@ -18,6 +18,9 @@
       size="large"
       class="text-sm"
     >
+      <Column header="Sr.no">
+        <template #body="{ index }">{{ index + 1 }}</template>
+      </Column>
       <Column sortable field="date" header="Date"  />
       <Column sortable field="amount" header="Amount" >
         <template #body="{ data }">

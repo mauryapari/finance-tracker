@@ -8,10 +8,17 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@primevue/nuxt-module', '@nuxt/a11y', '@nuxt/eslint'],
   tailwindcss: { config: { darkMode: 'class' } },
   primevue: {
+    components: {
+      include: ['Button', 'Column', 'ColumnGroup', 'DataTable', 'Dialog', 'InputNumber', 'InputText', 'Row', 'Select'],
+    },
     options: {
       theme: { preset: Aura, options: { darkModeSelector: '.dark' } },
       ripple: true,
     }
+  },
+  routeRules: {
+    '/api/stock-price':      { cache: { maxAge: 15 } },
+    '/api/stock-peak-batch': { cache: { maxAge: 60 * 60 } },
   },
   vite: {
     optimizeDeps: {
@@ -25,7 +32,6 @@ export default defineNuxtConfig({
       storageKey: 'finance_tracker_data',
     },
   },
-  // @ts-expect-error nitro is valid at runtime; type defs lag behind
   nitro: { preset: 'netlify' },
   app: {
     head: {
