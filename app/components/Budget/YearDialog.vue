@@ -112,15 +112,19 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import { useDataStore } from '~/stores/data'
+import type { BudgetYear } from '~/types'
 
-const props = defineProps({
-  visible: { type: Boolean, required: true },
-  mode: { type: String, default: null },
-  budgetYear: { type: Object, default: null },
+const props = withDefaults(defineProps<{
+  visible: boolean
+  mode?: string | null
+  budgetYear?: BudgetYear | null
+}>(), {
+  mode: null,
+  budgetYear: null,
 })
 
 const emit = defineEmits(['close', 'saved'])
@@ -142,7 +146,7 @@ const DEFAULTS = {
 const form = ref({ ...DEFAULTS })
 
 watch(
-  () => [props.mode, props.budgetYear, props.visible],
+  [() => props.mode, () => props.budgetYear, () => props.visible],
   ([mode, by, visible]) => {
     if (!visible) return
     if (mode === 'edit' && by) {

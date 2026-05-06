@@ -2,7 +2,7 @@ import YahooFinance from 'yahoo-finance2'
 
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
-async function fetchPeak(symbol, from) {
+async function fetchPeak(symbol: string, from: string): Promise<number | null> {
   try {
     const rows = await yf.historical(symbol, {
       period1: from,
@@ -17,7 +17,7 @@ async function fetchPeak(symbol, from) {
 }
 
 export default defineEventHandler(async (event) => {
-  const { symbols, froms } = getQuery(event)
+  const { symbols, froms } = getQuery<{ symbols?: string; froms?: string }>(event)
   if (!symbols || !froms) {
     throw createError({ statusCode: 400, message: 'symbols and froms are required' })
   }
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'symbols and froms must have the same length' })
   }
 
-  const peaks = await Promise.all(symbolList.map((sym, i) => fetchPeak(sym, fromList[i])))
+  const peaks = await Promise.all(symbolList.map((sym, i) => fetchPeak(sym, fromList[i]!)))
 
   return Object.fromEntries(symbolList.map((sym, i) => [sym, peaks[i]]))
 })

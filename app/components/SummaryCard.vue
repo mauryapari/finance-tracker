@@ -135,31 +135,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from "vue";
 import {
   calculateBuyValue,
   calculateCurrentValue,
 } from "~/composables/useCalculations";
+import type { PortfolioSummary } from "~/types";
 
-const props = defineProps({
-  title: { type: String, default: "" },
-  summary: {
-    type: Object,
-    default: () => ({
-      netValue: 0,
-      totalInvested: 0,
-      profit: 0,
-      profitPercentage: 0,
-      cagr: 0,
-    }),
-  },
-  cagr: { type: Number, default: 0 },
-  positions: { type: Array, default: () => [] },
+interface BreakdownPosition {
+  stock: string
+  cmp: number
+  qty: number
+  buyPrice: number
+  type?: string
+}
+
+const props = withDefaults(defineProps<{
+  title?: string
+  summary?: PortfolioSummary
+  cagr?: number
+  positions?: BreakdownPosition[]
+}>(), {
+  title: '',
+  summary: () => ({ netValue: 0, totalInvested: 0, profit: 0, profitPercentage: 0, cagr: 0 }),
+  cagr: 0,
+  positions: () => [],
 });
 
 const showBreakdown = ref(false);
-const nameSort = ref(null); // null | 'asc' | 'desc'
+const nameSort = ref<'asc' | 'desc' | null>(null);
 
 function cycleNameSort() {
   nameSort.value = nameSort.value === null ? 'asc' : nameSort.value === 'asc' ? 'desc' : null
@@ -192,7 +197,7 @@ const breakdownRows = computed(() =>
     }),
 );
 
-function formatCurrency(n) {
+function formatCurrency(n: number) {
   return "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 </script>

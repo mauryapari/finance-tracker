@@ -24,6 +24,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, 'window', { value: globalThis, writable: true, configurable: true })
   // Default: Redis not configured — all existing tests use localStorage path
   vi.stubGlobal('fetch', mockFetch({ configured: false }))
+  vi.stubGlobal('useRuntimeConfig', () => ({ public: { storageKey: 'finance_tracker_data' } }))
 })
 
 afterEach(() => {

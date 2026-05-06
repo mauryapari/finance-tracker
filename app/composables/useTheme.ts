@@ -1,14 +1,15 @@
 import { ref } from 'vue'
+import type { Ref } from 'vue'
 
-const isDark = ref(false)
+const isDark: Ref<boolean> = ref(false)
 
 export function useTheme() {
-  function init() {
+  function init(): void {
     isDark.value = localStorage.getItem('theme') === 'dark'
     document.documentElement.classList.toggle('dark', isDark.value)
   }
 
-  function toggle() {
+  function toggle(): void {
     isDark.value = !isDark.value
     document.documentElement.classList.toggle('dark', isDark.value)
     localStorage.setItem('theme', isDark.value ? 'dark' : 'light')

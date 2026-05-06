@@ -7,7 +7,6 @@ export default defineEventHandler(async (event) => {
   const res = await fetch(`${config.upstashRedisRestUrl}/get/${config.public.storageKey}`, {
     headers: { Authorization: `Bearer ${config.upstashRedisRestToken}` },
   })
-  const json = await res.json()
-  // Upstash returns { result: "<JSON string>" } or { result: null }
+  const json: { result: string | null } = await res.json()
   return { configured: true, data: json.result ? JSON.parse(json.result) : null }
 })

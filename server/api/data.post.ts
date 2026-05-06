@@ -5,7 +5,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, message: 'Redis not configured' })
   }
   const body = await readBody(event)
-  // Upstash REST SET expects the value as a plain string body
   await fetch(`${config.upstashRedisRestUrl}/set/${config.public.storageKey}`, {
     method: 'POST',
     headers: {

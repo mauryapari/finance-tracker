@@ -92,7 +92,7 @@
                 variant="link"
                 :label="formatCurrency(row.sellProceeds)"
                 class="!p-0 underline decoration-dotted decoration-green-400 !text-green-600 dark:!text-green-400"
-                @click="historyRowDrilldown = { type: 'hr-sells', prefix: row.prefix, monthLabel: row.prefix }"
+                @click="historyRowDrilldown = { type: 'hr-sells', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
               />
               <span v-else class="text-gray-400">—</span>
             </td>
@@ -102,7 +102,7 @@
                 variant="link"
                 :label="formatCurrency(-row.totalBuys)"
                 class="!p-0 underline decoration-dotted decoration-red-400 !text-red-600 dark:!text-red-400"
-                @click="historyRowDrilldown = { type: 'hr-buys', prefix: row.prefix, monthLabel: row.prefix }"
+                @click="historyRowDrilldown = { type: 'hr-buys', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
               />
               <span v-else class="text-gray-400">—</span>
             </td>
@@ -112,7 +112,7 @@
                 variant="link"
                 :label="formatCurrency(row.recycled)"
                 class="!p-0 underline decoration-dotted decoration-amber-400 !text-amber-600 dark:!text-amber-400"
-                @click="historyRowDrilldown = { type: 'hr-recycled', prefix: row.prefix, monthLabel: row.prefix }"
+                @click="historyRowDrilldown = { type: 'hr-recycled', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
               />
               <span v-else class="text-gray-400">—</span>
             </td>
@@ -178,7 +178,7 @@
               variant="link"
               :label="formatCurrency(row.sellProceeds)"
               class="!p-0 underline decoration-dotted decoration-green-400 !text-green-600 dark:!text-green-400"
-              @click="historyRowDrilldown = { type: 'hr-sells', prefix: row.prefix, monthLabel: row.prefix }"
+              @click="historyRowDrilldown = { type: 'hr-sells', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
             />
             <span v-else class="text-gray-400">—</span>
           </td>
@@ -188,7 +188,7 @@
               variant="link"
               :label="formatCurrency(-row.totalBuys)"
               class="!p-0 underline decoration-dotted decoration-red-400 !text-red-600 dark:!text-red-400"
-              @click="historyRowDrilldown = { type: 'hr-buys', prefix: row.prefix, monthLabel: row.prefix }"
+              @click="historyRowDrilldown = { type: 'hr-buys', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
             />
             <span v-else class="text-gray-400">—</span>
           </td>
@@ -198,7 +198,7 @@
               variant="link"
               :label="formatCurrency(row.recycled)"
               class="!p-0 underline decoration-dotted decoration-amber-400 !text-amber-600 dark:!text-amber-400"
-              @click="historyRowDrilldown = { type: 'hr-recycled', prefix: row.prefix, monthLabel: row.prefix }"
+              @click="historyRowDrilldown = { type: 'hr-recycled', prefix: row.prefix ?? '', monthLabel: row.prefix ?? '' }"
             />
             <span v-else class="text-gray-400">—</span>
           </td>
@@ -313,11 +313,24 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useDataStore } from '~/stores/data'
 import { formatCurrency } from '~/composables/useCalculations'
 import { calcBrokerBalanceHistory } from '~/composables/useBudgetCalculations'
+import type { BrokerHistoryEntry } from '~/types'
+
+interface HistoryRowDrilldown { type: string; prefix: string; monthLabel: string }
+interface DisplayRow {
+  isYearSummary?: boolean
+  prefix?: string
+  year?: number
+  sellProceeds: number
+  totalBuys: number
+  recycled: number
+  balance: number
+  months?: BrokerHistoryEntry[]
+}
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -329,8 +342,8 @@ const props = defineProps({
 defineEmits(['close'])
 
 const store = useDataStore()
-const historyRowDrilldown = ref(null)
-const yearDrilldown = ref(null)
+const historyRowDrilldown = ref<HistoryRowDrilldown | null>(null)
+const yearDrilldown = ref<DisplayRow | null>(null)
 
 const currentPrefix = computed(() => {
   if (!props.year || !props.month) return null
@@ -347,16 +360,16 @@ const displayRows = computed(() => {
   const selectedYear = props.year
   if (!rows.length) return []
 
-  const byYear = {}
+  const byYear: Record<number, BrokerHistoryEntry[]> = {}
   for (const row of rows) {
     const y = Number(row.prefix.split('-')[0])
     if (!byYear[y]) byYear[y] = []
-    byYear[y].push(row)
+    byYear[y]!.push(row)
   }
 
-  const result = []
+  const result: DisplayRow[] = []
   for (const y of Object.keys(byYear).map(Number).sort()) {
-    const yearRows = byYear[y]
+    const yearRows = byYear[y] ?? []
     if (y === selectedYear) {
       result.push(...yearRows)
     } else {
@@ -366,7 +379,7 @@ const displayRows = computed(() => {
         sellProceeds: yearRows.reduce((s, r) => s + r.sellProceeds, 0),
         totalBuys: yearRows.reduce((s, r) => s + r.totalBuys, 0),
         recycled: yearRows.reduce((s, r) => s + r.recycled, 0),
-        balance: yearRows[yearRows.length - 1].balance,
+        balance: yearRows[yearRows.length - 1]?.balance ?? 0,
         months: yearRows,
       })
     }
@@ -399,8 +412,8 @@ const historyRowRecycledInfo = computed(() => {
   const prefix = historyRowDrilldown.value.prefix
   const idx = balanceHistory.value.findIndex((r) => r.prefix === prefix)
   if (idx < 0) return null
-  const row = balanceHistory.value[idx]
-  const openingBalance = idx > 0 ? balanceHistory.value[idx - 1].balance : 0
+  const row = balanceHistory.value[idx]!
+  const openingBalance = idx > 0 ? (balanceHistory.value[idx - 1]?.balance ?? 0) : 0
   return {
     openingBalance,
     sellProceeds: row.sellProceeds,

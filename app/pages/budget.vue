@@ -24,7 +24,7 @@
     <BudgetConfigCard
       v-if="budgetYear"
       :budget-year="budgetYear"
-      :selected-year="selectedYear"
+      :selected-year="selectedYear ?? 0"
       @edit="yearDialogMode = 'edit'"
     />
 
@@ -32,7 +32,7 @@
       v-if="budgetYear"
       :tracking-rows="trackingRows"
       :tracking-totals="trackingTotals"
-      :selected-year="selectedYear"
+      :selected-year="selectedYear ?? 0"
       :budget-year="budgetYear"
       @open-drilldown="openDrilldown"
     />
@@ -45,8 +45,8 @@
     />
 
     <component
-      v-if="activeDrilldown"
       :is="activeDrilldown.component"
+      v-if="activeDrilldown"
       v-bind="activeDrilldown.props"
       :visible="true"
       @close="drilldown = null"
@@ -54,16 +54,17 @@
 
     <BudgetYearDialog
       :visible="yearDialogMode !== null"
-      :mode="yearDialogMode"
-      :budget-year="budgetYear"
+      :mode="yearDialogMode ?? undefined"
+      :budget-year="budgetYear ?? undefined"
       @close="yearDialogMode = null"
       @saved="onYearSaved"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
+import type { TrackingRow, GapRow } from '~/types'
 import { useDataStore } from '~/stores/data'
 import {
   calcStockEquityEtfsBreakdown,
@@ -83,8 +84,17 @@ const BudgetGapCommoditiesDialogs = defineAsyncComponent(() => import('~/compone
 
 const store = useDataStore()
 
+interface DrilldownState {
+  type: string
+  year: number | null
+  month: number
+  monthLabel: string
+  gapRow?: GapRow
+  trackingRow?: TrackingRow | null
+}
+
 // ── Year selection ─────────────────────────────────────────────────────────
-const selectedYear = ref(null)
+const selectedYear = ref<number | null>(null)
 
 const availableYears = computed(() =>
   store.tables.budgetYears.map((r) => r.year).sort((a, b) => b - a),
@@ -107,35 +117,36 @@ watch(
 
 // ── Monthly tracking rows ──────────────────────────────────────────────────
 const trackingRows = computed(() => {
-  if (!selectedYear.value) return []
-  const balanceData = calcBrokerRunningBalance(store, selectedYear.value)
+  const year = selectedYear.value
+  if (!year) return []
+  const balanceData = calcBrokerRunningBalance(store, year)
   return Array.from({ length: 12 }, (_, i) => {
     const month = i + 1
     const stored = store.tables.budgetMonthly.find(
-      (r) => r.year === selectedYear.value && r.month === month,
+      (r) => r.year === year && r.month === month,
     )
     const mfEquityOverride = stored?.mfEquity ?? null
     const ppfOverride = stored?.ppf ?? null
     const mfEquity = mfEquityOverride ?? budgetYear.value?.mfEquity ?? 0
     const ppf = ppfOverride ?? budgetYear.value?.ppf ?? 0
     const monthlyBudget = stored?.totalMonthly ?? null
-    const stockEquityEtfsBreakdown = calcStockEquityEtfsBreakdown(store, selectedYear.value, month)
+    const stockEquityEtfsBreakdown = calcStockEquityEtfsBreakdown(store, year, month)
     const stockEquityEtfs =
       stockEquityEtfsBreakdown.openPositions +
       stockEquityEtfsBreakdown.closedPositions +
       stockEquityEtfsBreakdown.etfs
-    const commoditiesGold = calcCommodityGold(store, selectedYear.value, month)
-    const commoditiesSilver = calcCommoditySilver(store, selectedYear.value, month)
+    const commoditiesGold = calcCommodityGold(store, year, month)
+    const commoditiesSilver = calcCommoditySilver(store, year, month)
     const commodities = commoditiesGold + commoditiesSilver
     const totalEquity = stockEquityEtfs + mfEquity
     const totalDebt = ppf
     const totalCommodities = commodities
     const total = totalEquity + totalDebt + totalCommodities
-    const bal = balanceData[i]
+    const bal = balanceData[i] ?? { freshStockEquityEtfs: 0, freshCommodities: 0, sellProceeds: 0, brokerBalance: 0 }
     return {
       _storedId: stored?.id ?? null,
       month,
-      monthLabel: `${selectedYear.value}-${String(month).padStart(2, '0')}`,
+      monthLabel: `${year}-${String(month).padStart(2, '0')}`,
       monthlyBudget,
       mfEquityOverride,
       ppfOverride,
@@ -153,7 +164,7 @@ const trackingRows = computed(() => {
       totalDebt,
       totalCommodities,
       total,
-      stockProfitBooked: calcStockProfitBooked(store, selectedYear.value, month),
+      stockProfitBooked: calcStockProfitBooked(store, year, month),
       sellProceeds: bal.sellProceeds,
       brokerBalance: bal.brokerBalance,
       freshStockEquityEtfs: bal.freshStockEquityEtfs,
@@ -163,7 +174,7 @@ const trackingRows = computed(() => {
 })
 
 const trackingTotals = computed(() => {
-  const keys = [
+  const keys: (keyof TrackingRow)[] = [
     'stockEquityEtfs',
     'mfEquity',
     'ppf',
@@ -179,19 +190,20 @@ const trackingTotals = computed(() => {
     'freshStockEquityEtfs',
     'freshCommodities',
   ]
-  const result = {}
+  const result: Record<string, number> = {}
   for (const key of keys) {
-    result[key] = trackingRows.value.reduce((s, r) => s + (r[key] || 0), 0)
+    result[key] = trackingRows.value.reduce((s, r) => s + ((r[key] as number) || 0), 0)
   }
   return result
 })
 
 // ── Gap analysis rows ──────────────────────────────────────────────────────
 const gapRows = computed(() => {
-  if (!budgetYear.value) return []
-  const { equityPercentage, debtPercentage, commodityPercentage } = budgetYear.value
+  const by = budgetYear.value
+  if (!by) return []
+  const { equityPercentage, debtPercentage, commodityPercentage } = by
   return trackingRows.value.map((r) => {
-    const totalMonthly = r.monthlyBudget ?? budgetYear.value.totalMonthly
+    const totalMonthly = r.monthlyBudget ?? by.totalMonthly
     const budgetEquity = totalMonthly * equityPercentage
     const budgetDebt = totalMonthly * debtPercentage
     const budgetCommodities = totalMonthly * commodityPercentage
@@ -216,7 +228,7 @@ const gapRows = computed(() => {
 })
 
 const gapTotals = computed(() => {
-  const keys = [
+  const keys: (keyof GapRow)[] = [
     'budgetEquity',
     'actualEquity',
     'freshEquity',
@@ -229,17 +241,17 @@ const gapTotals = computed(() => {
     'freshCommodities',
     'extraCommodities',
   ]
-  const result = {}
+  const result: Record<string, number> = {}
   for (const key of keys) {
-    result[key] = gapRows.value.reduce((s, r) => s + (r[key] || 0), 0)
+    result[key] = gapRows.value.reduce((s, r) => s + ((r[key] as number) || 0), 0)
   }
   return result
 })
 
 // ── Drill-down dialogs ─────────────────────────────────────────────────────
-const drilldown = ref(null)
+const drilldown = ref<DrilldownState | null>(null)
 
-function openDrilldown(type, row) {
+function openDrilldown(type: string, row: TrackingRow) {
   drilldown.value = {
     type,
     year: selectedYear.value,
@@ -248,7 +260,7 @@ function openDrilldown(type, row) {
   }
 }
 
-function openGapDrilldown(type, gapRow) {
+function openGapDrilldown(type: string, gapRow: GapRow) {
   const trackingRow = trackingRows.value.find((r) => r.month === gapRow.month) ?? null
   drilldown.value = {
     type,
@@ -273,15 +285,16 @@ const gapDrilldownProps = computed(() => ({
   budgetYear: budgetYear.value,
 }))
 
-const totalDrilldownRow = computed(() =>
-  drilldown.value?.type === 'total'
-    ? (trackingRows.value.find((r) => r.month === drilldown.value.month) ?? null)
-    : null,
-)
+const totalDrilldownRow = computed(() => {
+  const d = drilldown.value
+  return d?.type === 'total'
+    ? (trackingRows.value.find((r) => r.month === d.month) ?? null)
+    : null
+})
 
 const activeDrilldown = computed(() => {
   if (!drilldown.value) return null
-  const map = {
+  const map: Record<string, { component: unknown; props: Record<string, unknown> }> = {
     stocks: { component: BudgetStocksDrilldown, props: drilldownProps.value },
     sells: { component: BudgetSellsDrilldown, props: drilldownProps.value },
     total: { component: BudgetTotalDrilldown, props: { ...drilldownProps.value, trackingRow: totalDrilldownRow.value } },
@@ -294,9 +307,9 @@ const activeDrilldown = computed(() => {
 })
 
 // ── Year dialog ────────────────────────────────────────────────────────────
-const yearDialogMode = ref(null)
+const yearDialogMode = ref<'add' | 'edit' | null>(null)
 
-function onYearSaved(year) {
+function onYearSaved(year: number) {
   selectedYear.value = year
 }
 </script>

@@ -1,25 +1,44 @@
-function monthPrefix(year, month) {
+import type { Tables, BrokerMonthEntry, BrokerHistoryEntry, StockEquityEtfsBreakdown } from '~/types'
+
+interface TablesStore {
+  tables: Tables
+}
+
+function monthPrefix(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}`
 }
 
-function buyValueSum(rows, prefix, priceField = 'buyPrice') {
+function buyValueSum(
+  rows: { buyDate?: string; qty?: number; buyPrice?: number; buyRate?: number }[],
+  prefix: string,
+  priceField: 'buyPrice' | 'buyRate' = 'buyPrice',
+): number {
   return rows
     .filter(r => r.buyDate && r.buyDate.startsWith(prefix))
     .reduce((sum, r) => sum + (r[priceField] || 0) * (r.qty || 0), 0)
 }
 
-function gainSum(rows, prefix) {
+function gainSum(
+  rows: { sellDate?: string; sellPrice?: number; buyRate?: number; qty?: number }[],
+  prefix: string,
+): number {
   return rows
     .filter(r => r.sellDate && r.sellDate.startsWith(prefix))
     .reduce((sum, r) => sum + ((r.sellPrice || 0) - (r.buyRate || 0)) * (r.qty || 0), 0)
 }
 
-function matchesCommodityType(row, keyword) {
-  // type field is preferred; fall back to stock name for closed rows that lack it
+function matchesCommodityType(
+  row: { type?: string; stock?: string },
+  keyword: string,
+): boolean {
   return (row.type || row.stock || '').toLowerCase().includes(keyword)
 }
 
-export function calcStockEquityEtfsBreakdown(store, year, month) {
+export function calcStockEquityEtfsBreakdown(
+  store: TablesStore,
+  year: number,
+  month: number,
+): StockEquityEtfsBreakdown {
   const prefix = monthPrefix(year, month)
   return {
     openPositions: buyValueSum(store.tables.openPositions, prefix),
@@ -28,12 +47,12 @@ export function calcStockEquityEtfsBreakdown(store, year, month) {
   }
 }
 
-export function calcStockEquityEtfs(store, year, month) {
+export function calcStockEquityEtfs(store: TablesStore, year: number, month: number): number {
   const b = calcStockEquityEtfsBreakdown(store, year, month)
   return b.openPositions + b.closedPositions + b.etfs
 }
 
-export function calcCommodityGold(store, year, month) {
+export function calcCommodityGold(store: TablesStore, year: number, month: number): number {
   const prefix = monthPrefix(year, month)
   return (
     buyValueSum(store.tables.commodityEtfs.filter(r => matchesCommodityType(r, 'gold')), prefix) +
@@ -41,7 +60,7 @@ export function calcCommodityGold(store, year, month) {
   )
 }
 
-export function calcCommoditySilver(store, year, month) {
+export function calcCommoditySilver(store: TablesStore, year: number, month: number): number {
   const prefix = monthPrefix(year, month)
   return (
     buyValueSum(store.tables.commodityEtfs.filter(r => matchesCommodityType(r, 'silver')), prefix) +
@@ -49,7 +68,7 @@ export function calcCommoditySilver(store, year, month) {
   )
 }
 
-export function calcStockProfitBooked(store, year, month) {
+export function calcStockProfitBooked(store: TablesStore, year: number, month: number): number {
   const prefix = monthPrefix(year, month)
   return (
     gainSum(store.tables.closedPositions, prefix) +
@@ -58,22 +77,23 @@ export function calcStockProfitBooked(store, year, month) {
   )
 }
 
-function sellProceedsSum(rows, prefix) {
+function sellProceedsSum(
+  rows: { sellDate?: string; sellPrice?: number; qty?: number }[],
+  prefix: string,
+): number {
   return rows
     .filter(r => r.sellDate && r.sellDate.startsWith(prefix))
     .reduce((sum, r) => sum + (r.sellPrice || 0) * (r.qty || 0), 0)
 }
 
-function prefixFromDate(dateStr) {
+function prefixFromDate(dateStr: string | undefined): string | null {
   return dateStr ? dateStr.slice(0, 7) : null
 }
 
-// Returns an array[12] for all months of targetYear.
-// Each entry: { freshStockEquityEtfs, freshCommodities, sellProceeds, brokerBalance }
-// Computed by walking a running broker cash balance from the earliest activity date
-// through Dec of targetYear. Sell proceeds refill the balance; buys draw it down first
-// (recycled capital) before counting as fresh salary investment.
-export function calcBrokerRunningBalance(store, targetYear) {
+export function calcBrokerRunningBalance(
+  store: TablesStore,
+  targetYear: number,
+): BrokerMonthEntry[] {
   const allDates = [
     ...store.tables.openPositions.map(r => prefixFromDate(r.buyDate)),
     ...store.tables.closedPositions.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
@@ -81,20 +101,20 @@ export function calcBrokerRunningBalance(store, targetYear) {
     ...store.tables.closedEtfs.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
     ...store.tables.commodityEtfs.map(r => prefixFromDate(r.buyDate)),
     ...store.tables.closedCommodityEtfs.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
-  ].filter(Boolean).sort()
+  ].filter((d): d is string => d !== null).sort()
 
-  const empty12 = () =>
+  const empty12 = (): BrokerMonthEntry[] =>
     Array.from({ length: 12 }, () => ({ freshStockEquityEtfs: 0, freshCommodities: 0, sellProceeds: 0, brokerBalance: 0 }))
 
   if (!allDates.length) return empty12()
 
-  const earliestPrefix = allDates[0]
+  const earliestPrefix = allDates[0]!
   const endPrefix = `${targetYear}-12`
   if (earliestPrefix > endPrefix) return empty12()
 
-  let [y, m] = earliestPrefix.split('-').map(Number)
+  let [y, m] = earliestPrefix.split('-').map(Number) as [number, number]
   let brokerBalance = 0
-  const resultByPrefix = {}
+  const resultByPrefix: Record<string, BrokerMonthEntry> = {}
 
   while (true) {
     const prefix = `${y}-${String(m).padStart(2, '0')}`
@@ -139,9 +159,11 @@ export function calcBrokerRunningBalance(store, targetYear) {
   })
 }
 
-// Returns full month-by-month broker balance history from earliest activity through upToYear-upToMonth.
-// Each entry: { prefix, sellProceeds, totalBuys, recycled, balance }
-export function calcBrokerBalanceHistory(store, upToYear, upToMonth) {
+export function calcBrokerBalanceHistory(
+  store: TablesStore,
+  upToYear: number,
+  upToMonth: number,
+): BrokerHistoryEntry[] {
   const allDates = [
     ...store.tables.openPositions.map(r => prefixFromDate(r.buyDate)),
     ...store.tables.closedPositions.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
@@ -149,17 +171,17 @@ export function calcBrokerBalanceHistory(store, upToYear, upToMonth) {
     ...store.tables.closedEtfs.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
     ...store.tables.commodityEtfs.map(r => prefixFromDate(r.buyDate)),
     ...store.tables.closedCommodityEtfs.flatMap(r => [prefixFromDate(r.buyDate), prefixFromDate(r.sellDate)]),
-  ].filter(Boolean).sort()
+  ].filter((d): d is string => d !== null).sort()
 
   if (!allDates.length) return []
 
   const endPrefix = `${upToYear}-${String(upToMonth).padStart(2, '0')}`
-  const earliestPrefix = allDates[0]
+  const earliestPrefix = allDates[0]!
   if (earliestPrefix > endPrefix) return []
 
-  let [y, m] = earliestPrefix.split('-').map(Number)
+  let [y, m] = earliestPrefix.split('-').map(Number) as [number, number]
   let balance = 0
-  const history = []
+  const history: BrokerHistoryEntry[] = []
 
   while (true) {
     const prefix = `${y}-${String(m).padStart(2, '0')}`

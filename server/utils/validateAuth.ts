@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
+import type { H3Event } from 'h3'
 
-export function validateAuth(event) {
+export function validateAuth(event: H3Event): void {
   const secret = process.env.AUTH_SECRET
   if (!secret) return
   const auth = getHeader(event, 'authorization') || ''

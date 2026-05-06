@@ -182,7 +182,7 @@
                 rounded
                 size="small"
                 severity="secondary"
-                @click="cancelTrackingEdit(data)"
+                @click="cancelTrackingEdit()"
               />
             </template>
             <Button
@@ -221,29 +221,32 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import { useDataStore } from '~/stores/data'
 import { formatCurrency, formatPercentage } from '~/composables/useCalculations'
+import type { TrackingRow, BudgetMonthly, BudgetYear } from '~/types'
 
-const props = defineProps({
-  trackingRows: { type: Array, required: true },
-  trackingTotals: { type: Object, required: true },
-  selectedYear: { type: Number, required: true },
-  budgetYear: { type: Object, required: true },
-})
+interface StockEtfsBreakdown { openPositions: number; closedPositions: number; etfs: number }
+
+const props = withDefaults(defineProps<{
+  trackingRows: TrackingRow[]
+  trackingTotals: Partial<TrackingRow>
+  selectedYear: number
+  budgetYear: BudgetYear
+}>(), {})
 
 defineEmits(['open-drilldown'])
 
 const store = useDataStore()
-const editingTrackingRows = ref([])
+const editingTrackingRows = ref<TrackingRow[]>([])
 
-function isTrackingEditing(month) {
+function isTrackingEditing(month: number) {
   return editingTrackingRows.value.some((r) => r.month === month)
 }
 
-function startTrackingEdit(row) {
+function startTrackingEdit(row: TrackingRow) {
   editingTrackingRows.value = [{ ...row }]
 }
 
@@ -251,7 +254,7 @@ function cancelTrackingEdit() {
   editingTrackingRows.value = []
 }
 
-function stockEtfsTooltip(b) {
+function stockEtfsTooltip(b: StockEtfsBreakdown) {
   return [
     `Stocks (Open): ${formatCurrency(b.openPositions)}`,
     `Stocks (Closed): ${formatCurrency(b.closedPositions)}`,
@@ -259,7 +262,7 @@ function stockEtfsTooltip(b) {
   ].join('<br>')
 }
 
-function saveTracking(data) {
+function saveTracking(data: TrackingRow) {
   const year = props.selectedYear
   const month = data.month
   const mfEquity = data.mfEquityOverride != null ? Number(data.mfEquityOverride) : null
@@ -269,7 +272,7 @@ function saveTracking(data) {
       ? Number(data.monthlyBudget)
       : null
 
-  const payload = {}
+  const payload: Partial<BudgetMonthly> = {}
   if (mfEquity !== null) payload.mfEquity = mfEquity
   if (ppf !== null) payload.ppf = ppf
   if (totalMonthly !== null) payload.totalMonthly = totalMonthly

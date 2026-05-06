@@ -17,7 +17,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 import { useDataStore } from "~/stores/data";
 import { calcPortfolioSummary } from "~/composables/useCalculations";

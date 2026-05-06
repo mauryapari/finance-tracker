@@ -137,7 +137,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { formatCurrency, formatPercentage } from '~/composables/useCalculations'
 
@@ -153,7 +153,7 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-const extraCommSub = ref(null)
+const extraCommSub = ref<{ type: string } | null>(null)
 
 const prefix = computed(() => {
   if (!props.year || !props.month) return null

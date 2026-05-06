@@ -4,7 +4,7 @@
   </NuxtLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useDataStore } from '~/stores/data'
 import { useCmpPoller } from '~/composables/useCmpPoller'
 import { useTheme } from '~/composables/useTheme'
@@ -18,9 +18,9 @@ onMounted(async () => {
     await store.loadFromStorage()
   } else {
     const { default: demoData } = await import('~/assets/demo-data.json')
-    store.loadDemoData(demoData)
+    store.loadDemoData(demoData as unknown as { tables: import('~/types').Tables })
   }
   init()
 })
-if (isAuthenticated.value) useCmpPoller()
+useCmpPoller()
 </script>

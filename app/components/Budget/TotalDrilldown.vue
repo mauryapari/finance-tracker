@@ -79,7 +79,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { formatCurrency } from '~/composables/useCalculations'
 
 defineProps({

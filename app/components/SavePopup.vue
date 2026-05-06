@@ -16,17 +16,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({ mode: { type: String, default: 'save' } })
 defineEmits(['confirm', 'cancel'])
 
-// v-click-outside directive
+interface ClickOutsideEl extends HTMLElement {
+  _clickOutside?: (e: MouseEvent) => void
+}
+
 const vClickOutside = {
-  mounted(el, binding) {
-    el._clickOutside = e => { if (!el.contains(e.target)) binding.value(e) }
+  mounted(el: ClickOutsideEl, binding: { value: (e: MouseEvent) => void }) {
+    el._clickOutside = (e: MouseEvent) => { if (!el.contains(e.target as Node)) binding.value(e) }
     document.addEventListener('mousedown', el._clickOutside)
   },
-  unmounted(el) { document.removeEventListener('mousedown', el._clickOutside) }
+  unmounted(el: ClickOutsideEl) {
+    if (el._clickOutside) document.removeEventListener('mousedown', el._clickOutside)
+  },
 }
 </script>
 

@@ -52,26 +52,25 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from "vue";
 import { useDerivedCagrEntries } from "~/composables/useDerivedCagrEntries";
 
 const { derivedCommodityCagrEntries } = useDerivedCagrEntries();
 
-const selectedYear = ref(null);
+const selectedYear = ref<string | null>(null);
 
 const availableYears = computed(() => {
   const years = new Set(
     derivedCommodityCagrEntries.value.map((r) => r.date.slice(0, 4)),
   );
-  return [...years].sort((a, b) => b - a);
+  return [...years].sort((a, b) => Number(b) - Number(a));
 });
 
-const filteredEntries = computed(() =>
-  selectedYear.value
-    ? derivedCommodityCagrEntries.value.filter((r) =>
-        r.date.startsWith(selectedYear.value),
-      )
-    : derivedCommodityCagrEntries.value,
-);
+const filteredEntries = computed(() => {
+  const year = selectedYear.value
+  return year
+    ? derivedCommodityCagrEntries.value.filter((r) => r.date.startsWith(year))
+    : derivedCommodityCagrEntries.value
+});
 </script>

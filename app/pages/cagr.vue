@@ -24,7 +24,8 @@
       <Column sortable field="date" header="Date"  />
       <Column sortable field="amount" header="Amount" >
         <template #body="{ data }">
-          <span :class="data.investmentOrOut === 'Out'
+          <span
+:class="data.investmentOrOut === 'Out'
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-red-500 dark:text-red-400'">
             {{data.investmentOrOut === 'Investment' ? '-' : ''}}{{ data.amount?.toLocaleString("en-IN", { maximumFractionDigits: 2 }) }}
@@ -36,22 +37,23 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useDerivedCagrEntries } from '~/composables/useDerivedCagrEntries'
 
 const { derivedStockCagrEntries } = useDerivedCagrEntries()
 
-const selectedYear = ref(null)
+const selectedYear = ref<string | null>(null)
 
 const availableYears = computed(() => {
   const years = new Set(derivedStockCagrEntries.value.map((r) => r.date.slice(0, 4)))
-  return [...years].sort((a, b) => b - a)
+  return [...years].sort((a, b) => Number(b) - Number(a))
 })
 
-const filteredEntries = computed(() =>
-  selectedYear.value
-    ? derivedStockCagrEntries.value.filter((r) => r.date.startsWith(selectedYear.value))
-    : derivedStockCagrEntries.value,
-)
+const filteredEntries = computed(() => {
+  const year = selectedYear.value
+  return year
+    ? derivedStockCagrEntries.value.filter((r) => r.date.startsWith(year))
+    : derivedStockCagrEntries.value
+})
 </script>

@@ -29,9 +29,10 @@ v-else v-model="form[field.key]"
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
+import type { FieldConfig } from '~/types'
 
 const props = defineProps({
   type: { type: String, required: true },
@@ -97,8 +98,8 @@ const TYPE_LABELS = {
   cagrEntries: 'CAGR Entry', commodityCagrEntries: 'Commodity CAGR Entry',
 }
 
-const fields = computed(() => FIELD_CONFIGS[props.type] || [])
-const typeLabel = computed(() => TYPE_LABELS[props.type] || props.type)
+const fields = computed(() => (FIELD_CONFIGS[props.type as keyof typeof FIELD_CONFIGS] || []) as FieldConfig[])
+const typeLabel = computed(() => TYPE_LABELS[props.type as keyof typeof TYPE_LABELS] || props.type)
 
 const form = ref(props.initialData ? { ...props.initialData } : {})
 

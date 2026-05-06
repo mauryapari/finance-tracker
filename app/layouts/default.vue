@@ -41,7 +41,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useTheme } from '~/composables/useTheme'
 import { useDataStore } from '~/stores/data'
 import { useAuth } from '~/composables/useAuth'

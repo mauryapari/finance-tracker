@@ -60,28 +60,28 @@
         </template>
         <template v-if="fieldMap[col.field]" #editor="{ data, field }">
           <Select
-            v-if="fieldMap[col.field].type === 'select'"
+            v-if="fieldMap[col.field]?.type === 'select'"
             v-model="data[field]"
-            :options="fieldMap[col.field].options"
+            :options="fieldMap[col.field]?.options"
             size="small"
             class="w-full"
           />
           <InputText
-            v-else-if="fieldMap[col.field].type === 'date'"
+            v-else-if="fieldMap[col.field]?.type === 'date'"
             v-model="data[field]"
             type="date"
             size="small"
             class="w-full"
           />
           <InputNumber
-            v-else-if="fieldMap[col.field].type === 'decimal'"
+            v-else-if="fieldMap[col.field]?.type === 'decimal'"
             v-model="data[field]"
             :min-fraction-digits="2"
             size="small"
             class="w-full"
           />
           <InputNumber
-            v-else-if="fieldMap[col.field].type === 'number'"
+            v-else-if="fieldMap[col.field]?.type === 'number'"
             v-model="data[field]"
             size="small"
             class="w-full"
@@ -181,88 +181,98 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
+import type { TableKey } from '~/types'
 import { useDataStore } from '~/stores/data'
 import { formatCurrency, formatPercentage } from '~/composables/useCalculations'
 import { useTableEditing } from '~/composables/useTableEditing'
 import { useTableDelete } from '~/composables/useTableDelete'
-import { COLUMNS, FIELD_CONFIGS, BLANK_ROWS, ENRICHMENT, CLOSE_TARGET_KEY, CLOSE_FIELD_MAP } from '~/utils/tableConfigs'
+import { COLUMNS, FIELD_CONFIGS, BLANK_ROWS, ENRICHMENT, CLOSE_TARGET_KEY, CLOSE_FIELD_MAP, PORTFOLIO_GROUPS } from '~/utils/tableConfigs'
 
-const props = defineProps({
-  tableKey: { type: String, required: true },
-  title:    { type: String, default: '' },
-})
+const props = withDefaults(defineProps<{
+  tableKey: TableKey
+  title?: string
+}>(), { title: '' })
 
 const store = useDataStore()
 const { editingRows, refreshKey, isEditing, startEdit, cancelEdit } = useTableEditing()
 const { deleteDialog, startDelete, confirmDelete } = useTableDelete(store, props.tableKey)
 const closeDialog = ref(false)
-const closeForm   = ref({ stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null })
+const closeForm   = ref<{ stock: string; buyPrice: number; cmp: number; maxQty: number; sellDate: string; sellPrice: number; qty: number; sourceId: string | null }>({
+  stock: '', buyPrice: 0, cmp: 0, maxQty: 0, sellDate: '', sellPrice: 0, qty: 0, sourceId: null,
+})
 
-const columns        = computed(() => COLUMNS[props.tableKey] || [])
+const columns        = computed(() => COLUMNS[props.tableKey] ?? [])
 const hasStockField  = computed(() => columns.value.some(c => c.field === 'stock'))
-const filters        = ref({ global: { value: null } })
+const filters        = ref({ global: { value: null, matchMode: 'contains' } })
 const groupByStock   = ref(false)
-const fields         = computed(() => FIELD_CONFIGS[props.tableKey] || [])
+const fields         = computed(() => FIELD_CONFIGS[props.tableKey] ?? [])
 const fieldMap       = computed(() => Object.fromEntries(fields.value.map(f => [f.key, f])))
 const closeTargetKey = computed(() => CLOSE_TARGET_KEY[props.tableKey])
 const canClose       = computed(() => !!closeTargetKey.value)
 
+const tableRows = computed(() => store.tables[props.tableKey] as unknown as Array<Record<string, unknown>>)
+
+const portfolioGroupKeys = computed(() => PORTFOLIO_GROUPS[props.tableKey] ?? [props.tableKey])
+
 const totalCurrentValue = computed(() =>
-  (store.tables[props.tableKey] || []).reduce((s, p) => s + (p.cmp || 0) * (p.qty || 0), 0)
+  portfolioGroupKeys.value.reduce((total, key) => {
+    const rows = store.tables[key] as unknown as Array<Record<string, unknown>>
+    return total + rows.reduce((s, p) => s + ((p['cmp'] as number) || 0) * ((p['qty'] as number) || 0), 0)
+  }, 0)
 )
 
 const enrichedRows = computed(() => {
   void refreshKey.value
-  const fn = ENRICHMENT[props.tableKey] || (r => r)
-  return (store.tables[props.tableKey] || []).map(r => fn(r, totalCurrentValue.value))
+  const fn = ENRICHMENT[props.tableKey] ?? ((r: Record<string, unknown>) => r)
+  return tableRows.value.map(r => fn(r, totalCurrentValue.value))
 })
 
-function rowClass(row) {
-  return row._targetHit ? 'bg-green-50' : ''
+function rowClass(row: Record<string, unknown>): string {
+  return row['_targetHit'] ? 'bg-green-50' : ''
 }
 
-const newRowId = ref(null)
+const newRowId = ref<string | null>(null)
 
-function saveEdit(data) {
-  const row = { id: data.id }
+function saveEdit(data: Record<string, unknown>): void {
+  const row: Record<string, unknown> = { id: data['id'] }
   for (const f of fields.value) {
     row[f.key] = (f.type === 'decimal' || f.type === 'number') ? (Number(data[f.key]) || 0) : data[f.key]
   }
-  if (row.stock) row.stock = row.stock.toUpperCase()
-  store.updateRow(props.tableKey, row.id, row)
-  editingRows.value = editingRows.value.filter(r => r.id !== data.id)
+  if (row['stock']) row['stock'] = (row['stock'] as string).toUpperCase()
+  store.updateRow(props.tableKey, row['id'] as string, row as never)
+  editingRows.value = editingRows.value.filter(r => r.id !== data['id'])
   newRowId.value = null
 }
 
-function addRow() {
-  const blank = { id: uuidv4(), ...(BLANK_ROWS[props.tableKey] || {}) }
-  store.addRow(props.tableKey, blank)
-  editingRows.value = [blank]
+function addRow(): void {
+  const blank = { id: uuidv4(), ...((BLANK_ROWS as Partial<Record<string, Record<string, unknown>>>)[props.tableKey] ?? {}) }
+  store.addRow(props.tableKey, blank as never)
+  editingRows.value = [blank as unknown as { id: string }]
   newRowId.value = blank.id
 }
 
-function handleCancel(data) {
-  if (newRowId.value && data.id === newRowId.value) {
+function handleCancel(data: Record<string, unknown>): void {
+  if (newRowId.value && data['id'] === newRowId.value) {
     store.deleteRow(props.tableKey, newRowId.value)
   }
   newRowId.value = null
   cancelEdit()
 }
 
-function startClose(data) {
+function startClose(data: Record<string, unknown>): void {
   const today = new Date().toISOString().slice(0, 10)
   closeForm.value = {
-    stock:     data.stock,
-    buyPrice:  data.buyPrice,
-    cmp:       data.cmp || 0,
-    maxQty:    data.qty,
+    stock:     (data['stock'] as string) || '',
+    buyPrice:  (data['buyPrice'] as number) || 0,
+    cmp:       (data['cmp'] as number) || 0,
+    maxQty:    (data['qty'] as number) || 0,
     sellDate:  today,
-    sellPrice: data.cmp || 0,
-    qty:       data.qty,
-    sourceId:  data.id,
+    sellPrice: (data['cmp'] as number) || 0,
+    qty:       (data['qty'] as number) || 0,
+    sourceId:  (data['id'] as string) || null,
   }
   closeDialog.value = true
 }
@@ -277,27 +287,29 @@ const closePnlPercentage = computed(() => {
   return buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0
 })
 
-function confirmClose() {
+function confirmClose(): void {
   const { sellDate, sellPrice, qty, maxQty, sourceId } = closeForm.value
-  const raw = store.tables[props.tableKey].find(r => r.id === sourceId)
+  const targetKey = closeTargetKey.value
+  if (!targetKey || !sourceId) return
+  const raw = tableRows.value.find(r => r['id'] === sourceId)
   if (!raw) return
   const qtySelling = Math.min(qty, maxQty)
 
-  const closedRow = { id: uuidv4() }
-  for (const f of (CLOSE_FIELD_MAP[props.tableKey] || [])) {
-    if (f === 'buyPrice')   closedRow.buyRate = raw.buyPrice
-    else if (f === 'qty')   closedRow.qty = qtySelling
-    else if (f === 'sellDate')  closedRow.sellDate = sellDate
-    else if (f === 'sellPrice') closedRow.sellPrice = sellPrice
-    else                        closedRow[f] = raw[f]
+  const closedRow: Record<string, unknown> = { id: uuidv4() }
+  for (const f of (CLOSE_FIELD_MAP[props.tableKey] ?? [])) {
+    if (f === 'buyPrice')        closedRow['buyRate'] = raw['buyPrice']
+    else if (f === 'qty')        closedRow['qty'] = qtySelling
+    else if (f === 'sellDate')   closedRow['sellDate'] = sellDate
+    else if (f === 'sellPrice')  closedRow['sellPrice'] = sellPrice
+    else                         closedRow[f] = raw[f]
   }
 
-  store.addRow(closeTargetKey.value, closedRow)
+  store.addRow(targetKey, closedRow as never)
 
-  if (qtySelling >= raw.qty) {
+  if (qtySelling >= (raw['qty'] as number)) {
     store.deleteRow(props.tableKey, sourceId)
   } else {
-    store.updateRow(props.tableKey, sourceId, { ...raw, qty: raw.qty - qtySelling })
+    store.updateRow(props.tableKey, sourceId, { ...raw, qty: (raw['qty'] as number) - qtySelling } as never)
   }
 
   closeDialog.value = false

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 
 export default defineEventHandler(async (event) => {
-  const { password } = await readBody(event)
+  const { password } = await readBody<{ password?: string }>(event)
   if (!password) throw createError({ statusCode: 400, message: 'password required' })
   const { AUTH_PASSWORD, AUTH_SECRET } = process.env
   if (!AUTH_PASSWORD || !AUTH_SECRET) throw createError({ statusCode: 500, message: 'server misconfigured' })

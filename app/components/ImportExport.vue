@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useDataStore } from '~/stores/data'
 
@@ -20,7 +20,7 @@ const error = ref(false)
 
 const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 
-function flash(msg, isErr = false) {
+function flash(msg: string, isErr = false) {
   message.value = msg
   error.value = isErr
   setTimeout(() => { message.value = '' }, 3000)
@@ -36,19 +36,20 @@ function exportData() {
   URL.revokeObjectURL(a.href)
 }
 
-function importData(e) {
-  const file = e.target.files[0]
+function importData(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = ev => {
+  reader.onload = (ev: ProgressEvent<FileReader>) => {
     try {
-      const data = JSON.parse(ev.target.result)
+      const data = JSON.parse(ev.target?.result as string)
       store.importAll(data)
       flash('Imported successfully')
     } catch (err) {
-      flash(err.message || 'Import failed', true)
+      flash((err as Error).message || 'Import failed', true)
     }
-    e.target.value = ''
+    input.value = ''
   }
   reader.readAsText(file)
 }

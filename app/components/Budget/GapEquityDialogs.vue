@@ -273,7 +273,7 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useDataStore } from '~/stores/data'
 import { formatCurrency, formatPercentage } from '~/composables/useCalculations'
@@ -293,8 +293,8 @@ defineEmits(['close'])
 
 const store = useDataStore()
 
-const extraEquitySub = ref(null)
-const freshEquityDrilldown = ref(null)
+const extraEquitySub = ref<{ type: string } | null>(null)
+const freshEquityDrilldown = ref<{ type: string; monthLabel: string } | null>(null)
 
 const prefix = computed(() => {
   if (!props.year || !props.month) return null
@@ -308,8 +308,8 @@ const freshEquityRecycledInfo = computed(() => {
   const history = calcBrokerBalanceHistory(store, props.year, props.month)
   const idx = history.findIndex((r) => r.prefix === p)
   if (idx < 0) return null
-  const hRow = history[idx]
-  const openingBalance = idx > 0 ? history[idx - 1].balance : 0
+  const hRow = history[idx]!
+  const openingBalance = idx > 0 ? (history[idx - 1]?.balance ?? 0) : 0
   const tr = props.trackingRow
   return {
     openingBalance,
