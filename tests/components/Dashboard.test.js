@@ -15,6 +15,10 @@ const SummaryCardStub = {
   template: '<div data-testid="summary-card">{{ title }}</div>',
 }
 
+const InvestmentCalculatorStub = {
+  template: '<div data-testid="investment-calculator" />',
+}
+
 describe('Dashboard', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -22,7 +26,7 @@ describe('Dashboard', () => {
 
   function makeWrapper() {
     return mount(Dashboard, {
-      global: { stubs: { SummaryCard: SummaryCardStub } },
+      global: { stubs: { SummaryCard: SummaryCardStub, InvestmentCalculator: InvestmentCalculatorStub } },
     })
   }
 
@@ -41,5 +45,10 @@ describe('Dashboard', () => {
     const wrapper = makeWrapper()
     const cards = wrapper.findAll('[data-testid="summary-card"]')
     expect(cards[1].text()).toContain('Commodity Portfolio')
+  })
+
+  it('renders the InvestmentCalculator', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="investment-calculator"]').exists()).toBe(true)
   })
 })

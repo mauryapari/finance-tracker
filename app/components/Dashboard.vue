@@ -14,6 +14,7 @@
         :positions="store.tables.commodityEtfs"
       />
     </div>
+    <InvestmentCalculator />
   </div>
 </template>
 
