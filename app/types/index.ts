@@ -125,6 +125,7 @@ export interface Tables {
   commodityCagrEntries: CommodityCagrEntry[]
   budgetYears: BudgetYear[]
   budgetMonthly: BudgetMonthly[]
+  watchlist: WatchlistEntry[]
 }
 
 export interface DataState {
@@ -284,4 +285,44 @@ export interface GapRow {
 export interface Cashflow {
   amount: number
   date: string
+}
+
+// ── Watchlist ──────────────────────────────────────────────────────────────
+
+export type WatchlistSignal = 'BUY' | 'SELL' | 'HOLD' | 'WATCH'
+
+export interface WatchlistEntry {
+  id: string
+  stock: string
+  stockExchange: 'NSE' | 'BSE' | 'Other'
+  signal: WatchlistSignal
+  score: number                  // 0–100 AI confidence score
+  lastUpdated: string            // ISO date YYYY-MM-DD
+  buyConditions: string[]        // checklist items for entry
+  sellConditions: string[]       // checklist items for exit
+  holdConditions: string[]       // checklist items for hold
+  notes: string                  // short summary
+  vitepressUrl?: string          // optional link to full AI analysis doc
+}
+
+// ── Trade history ───────────────────────────────────────────────────────────
+
+export type TradeEventType = 'BUY' | 'SELL'
+
+export interface TradeEvent {
+  id: string
+  date: string         // ISO YYYY-MM-DD
+  type: TradeEventType
+  stock: string
+  qty: number
+  price: number
+  value: number        // price × qty
+  tableKey: string
+  linkTo: string       // route path
+}
+
+export interface HeatmapDay {
+  date: string         // ISO YYYY-MM-DD
+  count: number
+  value: number        // total ₹ traded that day
 }

@@ -1,12 +1,12 @@
+import tailwindcss from '@tailwindcss/vite'
 import Aura from '@primevue/themes/aura'
 
 export default defineNuxtConfig({
-  css: ['primeicons/primeicons.css'],
+  css: ['primeicons/primeicons.css', '~/assets/main.css'],
   future: { compatibilityVersion: 4 },
   compatibilityDate: '2025-07-15',
   ssr: false,
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@primevue/nuxt-module', '@nuxt/a11y', '@nuxt/eslint'],
-  tailwindcss: { config: { darkMode: 'class' } },
+  modules: ['@pinia/nuxt', '@primevue/nuxt-module', '@nuxt/a11y', '@nuxt/eslint'],
   primevue: {
     components: {
       include: ['Button', 'Column', 'ColumnGroup', 'DataTable', 'Dialog', 'InputNumber', 'InputText', 'Row', 'Select'],
@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     '/api/stock-peak-batch': { cache: { maxAge: 60 * 60 } },
   },
   vite: {
+    plugins: [tailwindcss()],
     optimizeDeps: {
       include: ['uuid'],
     }
@@ -28,6 +29,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     upstashRedisRestUrl: '',
     upstashRedisRestToken: '',
+    prodStorageKey: '',   // NUXT_PROD_STORAGE_KEY — prod Redis key to seed local data from
     public: {
       storageKey: 'finance_tracker_data',
     },

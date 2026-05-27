@@ -1,15 +1,23 @@
+import { ref } from 'vue'
 import { useDataStore } from '~/stores/data'
 import { useAuth } from '~/composables/useAuth'
+import type { Ref } from 'vue'
 import type { OpenPosition, Etf, CommodityEtf, TableKey } from '~/types'
 
 type PollablePosition = OpenPosition | Etf | CommodityEtf
 
-export function useCmpPoller(): void {
-  if (import.meta.server) return
+export interface CmpPollerReturn {
+  refreshPrices: () => Promise<void>
+  isRefreshing: Ref<boolean>
+}
+
+export function useCmpPoller(): CmpPollerReturn {
+  if (import.meta.server) return { refreshPrices: async () => {}, isRefreshing: ref(false) }
 
   const store = useDataStore()
   const { isAuthenticated } = useAuth()
   const alreadyNotified = new Set<string>()
+  const isRefreshing = ref(false)
   let intervalId: ReturnType<typeof setInterval> | null = null
 
   const POLL_INTERVAL = isAuthenticated.value ? 5 * 60 * 1000 : 60 * 60 * 1000
@@ -93,6 +101,17 @@ export function useCmpPoller(): void {
     }
   }
 
+  async function refreshPrices(): Promise<void> {
+    if (isRefreshing.value) return
+    isRefreshing.value = true
+    try {
+      await pollAll()
+    }
+    finally {
+      isRefreshing.value = false
+    }
+  }
+
   function startPolling(): void {
     if (isMarketOpen()) pollAll()
     intervalId = setInterval(() => {
@@ -116,4 +135,6 @@ export function useCmpPoller(): void {
   onUnmounted(() => {
     if (intervalId) clearInterval(intervalId)
   })
+
+  return { refreshPrices, isRefreshing }
 }

@@ -19,6 +19,7 @@ const ALL_TABS = [
   { label: 'CAGR Tracker',         to: '/cagr' },
   { label: 'Commodity CAGR',        to: '/commodity-cagr' },
   { label: 'Budget',                to: '/budget' },
+  { label: '👁 Watchlist',          to: '/watchlist' },
 ]
 
 // NuxtLink stub that renders an <a> so we can inspect classes and text
@@ -35,9 +36,9 @@ function makeWrapper(path = '/') {
 }
 
 describe('TabNav — renders all tabs', () => {
-  it('renders 10 tab links', () => {
+  it('renders 11 tab links', () => {
     const w = makeWrapper()
-    expect(w.findAll('a')).toHaveLength(10)
+    expect(w.findAll('a')).toHaveLength(11)
   })
 
   it.each(ALL_TABS)('renders "$label" tab', ({ label }) => {

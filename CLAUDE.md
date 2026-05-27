@@ -257,4 +257,43 @@ it('has no axe violations', async () => {
   const { container } = render(MyComponent)
   expect(await axe(container)).toHaveNoViolations()
 })
+
+# TBC Render — Project Instructions
+
+## Stack
+
+Nuxt 4 / Vue 3 / TypeScript / SCSS monorepo.
+
+## Skill Auto-Invocation Rules
+
+**ALWAYS invoke the `vue` skill** before:
+
+- Creating or editing any `.vue` file
+- Writing composables (`use*.ts`)
+- Working with props/emits, `<script setup>`, Composition API, VueUse, reactive state
+- Planning or reviewing Vue component architecture
+
+**ALWAYS invoke the `nuxt` skill** before:
+
+- Creating or editing pages, layouts, plugins, middleware, server routes
+- Working with `nuxt.config.ts`, `app.config.ts`, Nitro, auto-imports
+- Planning or reviewing Nuxt module / routing / SSR strategy
+
+**ALWAYS invoke the `vitest` skill** before:
+
+- Writing or modifying test files (`*.spec.ts`, `*.test.ts`)
+- Setting up test coverage, mocks, or `vitest.config.ts`
+
+Invoke the relevant skill(s) at the START of any task — including planning, exploration, and design discussions — not only when writing code.
+
+## Test File Requirements
+
+**ALWAYS create a co-located test file when creating a new Vue component or Nuxt page/layout/composable.**
+
+Rules:
+- New `Foo.vue` → create `Foo.spec.ts` in the same directory
+- New `useFoo.ts` composable → create `useFoo.spec.ts` in the same directory
+- New Nuxt page `pages/foo.vue` → create `pages/foo.spec.ts`
+- Test file must be created in the same PR/commit as the component — never deferred
+- Invoke the `vitest` skill before writing the test
 ```

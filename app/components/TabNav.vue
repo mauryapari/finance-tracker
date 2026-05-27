@@ -34,5 +34,6 @@ const tabs = [
   { to: "/cagr", label: "CAGR Tracker" },
   { to: "/commodity-cagr", label: "Commodity CAGR" },
   { to: "/budget", label: "Budget" },
+  { to: "/watchlist", label: "👁 Watchlist" },
 ];
 </script>

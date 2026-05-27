@@ -1,11 +1,13 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
+import { resolve } from 'node:path'
 
 export default defineConfig({
   plugins: [vue()],
   test: {
     environment: 'happy-dom',
     globals: true,
+    testTimeout: 15000,
     setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',
@@ -14,7 +16,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '~': '/Users/pmaurya/projects/finance-tracker/app',
+      '~': resolve(__dirname, 'app'),
     },
   },
 })

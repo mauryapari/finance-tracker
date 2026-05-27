@@ -35,16 +35,16 @@ afterEach(() => {
 // Initial state
 // ---------------------------------------------------------------------------
 describe('initial state', () => {
-  it('starts with all ten empty tables', () => {
+  it('starts with all eleven empty tables (including watchlist)', () => {
     const store = useDataStore()
     const keys = ['openPositions', 'closedPositions', 'etfs', 'closedEtfs',
       'commodityEtfs', 'closedCommodityEtfs', 'cagrEntries', 'commodityCagrEntries',
-      'budgetYears', 'budgetMonthly']
+      'budgetYears', 'budgetMonthly', 'watchlist']
     for (const k of keys) expect(store.tables[k]).toEqual([])
   })
 
-  it('has version 2', () => {
-    expect(useDataStore().version).toBe(2)
+  it('has version 3', () => {
+    expect(useDataStore().version).toBe(3)
   })
 
   it('defaults storageMode to local', () => {
@@ -385,5 +385,102 @@ describe('commoditySummary getter', () => {
     expect(s.netValue).toBe(2400)
     expect(s.profit).toBe(400)
     expect(s.profitPercentage).toBe(20)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// v2→v3 migration: watchlist backfill
+// ---------------------------------------------------------------------------
+describe('v2→v3 migration — watchlist backfill', () => {
+  it('backfills watchlist: [] when loading v2 localStorage data', async () => {
+    const store = useDataStore()
+    // Simulate v2 data in localStorage (no watchlist key)
+    const v2Data = {
+      version: 2,
+      tables: {
+        openPositions: [{ id: 'p1', stock: 'TCS' }],
+        closedPositions: [],
+        etfs: [],
+        closedEtfs: [],
+        commodityEtfs: [],
+        closedCommodityEtfs: [],
+        cagrEntries: [],
+        commodityCagrEntries: [],
+        budgetYears: [],
+        budgetMonthly: [],
+        // watchlist intentionally missing
+      },
+    }
+    localStorage.setItem('finance_tracker_data', JSON.stringify(v2Data))
+    // Redis not configured → falls back to localStorage
+    await store.loadFromStorage()
+    expect(store.tables.watchlist).toEqual([])
+    // Existing data preserved
+    expect(store.tables.openPositions[0].stock).toBe('TCS')
+  })
+
+  it('topBuyWatchlist getter returns BUY entries sorted by score', () => {
+    const store = useDataStore()
+    store.tables.watchlist.push(
+      { id: 'w1', stock: 'A', signal: 'BUY', score: 60, stockExchange: 'NSE', lastUpdated: '2026-01-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [] },
+      { id: 'w2', stock: 'B', signal: 'BUY', score: 90, stockExchange: 'NSE', lastUpdated: '2026-01-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [] },
+      { id: 'w3', stock: 'C', signal: 'SELL', score: 95, stockExchange: 'NSE', lastUpdated: '2026-01-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [] },
+    )
+    const top = store.topBuyWatchlist
+    expect(top[0].stock).toBe('B')
+    expect(top[1].stock).toBe('A')
+    // SELL entry excluded
+    expect(top.every(e => e.signal === 'BUY')).toBe(true)
+  })
+
+  it('topBuyWatchlist limits to 5 entries', () => {
+    const store = useDataStore()
+    for (let i = 0; i < 8; i++) {
+      store.tables.watchlist.push({
+        id: `w${i}`, stock: `S${i}`, signal: 'BUY', score: i * 10,
+        stockExchange: 'NSE', lastUpdated: '2026-01-01', notes: '',
+        buyConditions: [], sellConditions: [], holdConditions: [],
+      })
+    }
+    expect(store.topBuyWatchlist.length).toBe(5)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// watchlist CRUD via generic addRow / updateRow / deleteRow
+// ---------------------------------------------------------------------------
+describe('watchlist CRUD', () => {
+  it('adds a watchlist entry', () => {
+    const store = useDataStore()
+    store.addRow('watchlist', {
+      stock: 'RELIANCE', stockExchange: 'NSE', signal: 'BUY', score: 80,
+      lastUpdated: '2026-05-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [],
+    })
+    expect(store.tables.watchlist).toHaveLength(1)
+    expect(store.tables.watchlist[0].stock).toBe('RELIANCE')
+  })
+
+  it('updates a watchlist entry', () => {
+    const store = useDataStore()
+    store.addRow('watchlist', {
+      id: 'wl1', stock: 'INFY', stockExchange: 'NSE', signal: 'WATCH', score: 50,
+      lastUpdated: '2026-05-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [],
+    })
+    store.updateRow('watchlist', 'wl1', {
+      id: 'wl1', stock: 'INFY', stockExchange: 'NSE', signal: 'BUY', score: 75,
+      lastUpdated: '2026-05-10', notes: 'Updated', buyConditions: ['RSI < 40'], sellConditions: [], holdConditions: [],
+    })
+    expect(store.tables.watchlist[0].signal).toBe('BUY')
+    expect(store.tables.watchlist[0].score).toBe(75)
+  })
+
+  it('deletes a watchlist entry', () => {
+    const store = useDataStore()
+    store.addRow('watchlist', {
+      id: 'wl2', stock: 'WIPRO', stockExchange: 'NSE', signal: 'SELL', score: 30,
+      lastUpdated: '2026-05-01', notes: '', buyConditions: [], sellConditions: [], holdConditions: [],
+    })
+    store.deleteRow('watchlist', 'wl2')
+    expect(store.tables.watchlist).toHaveLength(0)
   })
 })

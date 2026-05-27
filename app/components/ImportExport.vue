@@ -6,6 +6,28 @@
       <Button label="Import" icon="pi pi-upload" size="small" outlined as="span" class="cursor-pointer" />
       <input type="file" accept="application/json,.json" class="hidden" @change="importData" >
     </label>
+    <Button
+      label="Refresh Prices"
+      icon="pi pi-refresh"
+      size="small"
+      outlined
+      severity="secondary"
+      :loading="isRefreshing"
+      aria-label="Fetch latest stock prices now"
+      @click="refreshPrices"
+    />
+    <DevOnly>
+      <Button
+        label="Load from Prod"
+        icon="pi pi-cloud-download"
+        size="small"
+        outlined
+        severity="warn"
+        :loading="loadingProd"
+        aria-label="Replace local data with production data"
+        @click="loadFromProd"
+      />
+    </DevOnly>
     <span v-if="message" class="text-xs" :class="error ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'">{{ message }}</span>
   </div>
 </template>
@@ -13,10 +35,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useDataStore } from '~/stores/data'
+import { getAuthHeaders } from '~/composables/useAuth'
+import { useCmpRefresh } from '~/composables/useCmpRefresh'
 
 const store = useDataStore()
+const { refreshPrices, isRefreshing } = useCmpRefresh()
 const message = ref('')
 const error = ref(false)
+const loadingProd = ref(false)
 
 const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -24,6 +50,28 @@ function flash(msg: string, isErr = false) {
   message.value = msg
   error.value = isErr
   setTimeout(() => { message.value = '' }, 3000)
+}
+
+async function loadFromProd() {
+  if (!confirm('This will replace all local data with the current production data. Continue?')) return
+  loadingProd.value = true
+  message.value = ''
+  try {
+    const res = await fetch('/api/prod-data', { headers: getAuthHeaders() as HeadersInit })
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(text || `HTTP ${res.status}`)
+    }
+    const data = await res.json()
+    store.importAll(data)
+    flash('Loaded from prod ✓')
+  }
+  catch (err) {
+    flash((err as Error).message || 'Failed to load prod data', true)
+  }
+  finally {
+    loadingProd.value = false
+  }
 }
 
 function exportData() {

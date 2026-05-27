@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
 import { getAuthHeaders } from '~/composables/useAuth'
-import type { DataState, Tables, TableKey, StoreSummary, StorageMode } from '~/types'
+import type { DataState, Tables, TableKey, StoreSummary, StorageMode, WatchlistEntry } from '~/types'
 
 const getStorageKey = (): string => useRuntimeConfig().public.storageKey as string
 
-const CURRENT_VERSION = 2
+const CURRENT_VERSION = 3
 
 function initialState(): Omit<DataState, 'storageMode' | 'isDemoMode'> {
   return {
@@ -21,6 +21,7 @@ function initialState(): Omit<DataState, 'storageMode' | 'isDemoMode'> {
       commodityCagrEntries: [],
       budgetYears: [],
       budgetMonthly: [],
+      watchlist: [],
     },
   }
 }
@@ -48,6 +49,12 @@ export const useDataStore = defineStore('data', {
       const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0
       return { netValue, totalInvested, profit, profitPercentage }
     },
+    topBuyWatchlist: (state): WatchlistEntry[] =>
+      state.tables.watchlist
+        .filter(e => e.signal === 'BUY')
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5),
+
     commoditySummary: (state): StoreSummary => {
       const positions = state.tables.commodityEtfs
       const netValue = positions.reduce((s, p) => s + (p.cmp || 0) * (p.qty || 0), 0)

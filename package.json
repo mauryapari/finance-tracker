@@ -15,14 +15,15 @@
     "lint:fix": "eslint . --fix && stylelint \"app/**/*.{vue,css}\" --fix"
   },
   "dependencies": {
-    "@nuxtjs/tailwindcss": "^6.14.0",
     "@pinia/nuxt": "^0.11.3",
     "@primevue/nuxt-module": "^4.5.5",
     "@primevue/themes": "^4.5.4",
+    "@tailwindcss/vite": "^4.3.0",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",
+    "tailwindcss": "^4.3.0",
     "uuid": "^14.0.0",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4",
